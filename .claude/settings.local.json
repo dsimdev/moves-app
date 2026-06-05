@@ -9,7 +9,9 @@
       "Bash(mv README.md docs/)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "PowerShell(git add .)"
+      "PowerShell(git add .)",
+      "PowerShell(git config user.email \"dmnsimon@gmail.com\")",
+      "PowerShell(git config user.name \"Claude\")"
     ]
   }
 }
