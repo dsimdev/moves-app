@@ -10,7 +10,7 @@ import {
   getDocs,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "./config";
+import { db } from "./firebase";
 import { Movimiento } from "@/types";
 
 export async function crearMovimiento(

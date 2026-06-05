@@ -9,7 +9,7 @@ import {
   getDocs,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "./config";
+import { db } from "./firebase";
 import { Periodo } from "@/types";
 
 export async function crearPeriodo(
