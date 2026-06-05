@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --eslint --no-git --import-alias '@/*' --skip-git)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --eslint --import-alias '@/*')",
+      "Bash(mkdir -p docs)",
+      "Bash(mv claude_advisor_prompt.md docs/)",
+      "Bash(mv README.md docs/)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "PowerShell(git add .)"
+    ]
+  }
+}
