@@ -48,3 +48,6 @@ memory/
 *.tsbuildinfo
 next-env.d.ts
 firestore.rules
+
+AGENTS.md
+CLAUDE.md
