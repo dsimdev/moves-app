@@ -313,7 +313,7 @@ export default function ReportesPage() {
             <div className="label" style={{ marginBottom: 2 }}>Análisis</div>
             <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5, display: "inline-block", background: "linear-gradient(110deg, var(--blue) 10%, var(--green) 90%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Reportes</div>
           </div>
-          <div className="subtabs" style={{ marginBottom: 0 }}>
+          <div className="subtabs">
             {SUBS.map((s) => {
               const isActive = sub === s.id;
               const tabColor = s.id === "gastos" ? "var(--red)" : s.id === "ingresos" ? "var(--green)" : "var(--blue)";
