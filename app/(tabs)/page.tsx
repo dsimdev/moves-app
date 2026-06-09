@@ -81,8 +81,8 @@ export default function Dashboard() {
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10, flexShrink: 0 }}>
                 <span className="badge" style={{ background: barColor + "20", color: barColor, border: `1px solid ${barColor}44` }}>{pctDisp}%</span>
                 <button onClick={toggleOculto} aria-label="Ocultar valores" style={{
-                  background: "var(--surface-alt)", border: "1px solid var(--border)", color: oculto ? "var(--accent)" : "var(--muted)",
-                  width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                  background: "none", border: "none", color: oculto ? "var(--accent)" : "var(--muted)",
+                  display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 6,
                 }}>
                   <EyeIcon off={oculto} />
                 </button>

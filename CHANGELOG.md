@@ -5,6 +5,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [1.9.1] — 2026-06-08
+
+### Changed
+- Botón editar (lápiz) en lista de movimientos: sin recuadro
+- Botón ocultar valores (ojo) en Dashboard: sin recuadro
+
+---
+
 ## [1.9.0] — 2026-06-08
 
 ### Changed

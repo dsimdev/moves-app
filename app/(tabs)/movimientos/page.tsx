@@ -389,9 +389,9 @@ export default function MovimientosPage() {
                     {isGasto ? "-" : "+"}{money(m.monto)}
                   </span>
                   <button onClick={() => openEdit(m)} aria-label="Editar" style={{
-                    background: "var(--surface-alt)", border: "1px solid var(--border)",
-                    color: "var(--muted)", borderRadius: 9, width: 30, height: 30, cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    background: "none", border: "none",
+                    color: "var(--muted)", cursor: "pointer", padding: 6, flexShrink: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
                   }}><PencilIcon /></button>
                 </div>
               </div>
