@@ -162,12 +162,12 @@ export default function DolaresPage() {
                   <div key={t} onClick={() => { setTipoCambioSelUSD(t); if (user?.uid) actualizarTipoCambio(user.uid, t); }}
                     style={{
                       flex: 1, cursor: "pointer",
-                      background: t === tipoCambioRefUSD ? "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)" : "var(--surface-alt)",
-                      border: `1px solid ${t === tipoCambioRefUSD ? "var(--yellow)55" : "var(--border)"}`,
-                      borderRadius: "var(--radius-sm)", padding: "10px 8px", textAlign: "center", transition: "all 0.15s",
+                      background: "var(--surface-alt)",
+                      border: `1px solid ${t === tipoCambioRefUSD ? "var(--yellow)66" : "var(--border)"}`,
+                      borderRadius: "var(--radius-sm)", padding: "10px 8px", textAlign: "center", transition: "all 0.2s",
                     }}>
-                    <div style={{ fontSize: 9, color: "var(--muted)", textTransform: "uppercase", marginBottom: 6 }}>{t}</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: t === tipoCambioRefUSD ? "var(--yellow)" : "var(--text)" }}>
+                    <div style={{ fontSize: 9, color: t === tipoCambioRefUSD ? "var(--yellow)" : "var(--muted)", textTransform: "uppercase", marginBottom: 6, transition: "color 0.2s" }}>{t}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: t === tipoCambioRefUSD ? "var(--yellow)" : "var(--muted)" }}>
                       {cotizacion[t] ? `$${cotizacion[t].toLocaleString("es-AR")}` : "—"}
                     </div>
                   </div>
@@ -231,12 +231,12 @@ export default function DolaresPage() {
                     <div key={t} onClick={() => setTipoCambioSelEUR(t)}
                       style={{
                         flex: 1, cursor: "pointer",
-                        background: t === tipoCambioRefEUR ? "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)" : "var(--surface-alt)",
-                        border: `1px solid ${t === tipoCambioRefEUR ? "var(--yellow)55" : "var(--border)"}`,
-                        borderRadius: "var(--radius-sm)", padding: "10px 8px", textAlign: "center", transition: "all 0.15s",
+                        background: "var(--surface-alt)",
+                        border: `1px solid ${t === tipoCambioRefEUR ? "var(--yellow)66" : "var(--border)"}`,
+                        borderRadius: "var(--radius-sm)", padding: "10px 8px", textAlign: "center", transition: "all 0.2s",
                       }}>
-                      <div style={{ fontSize: 9, color: "var(--muted)", textTransform: "uppercase", marginBottom: 6 }}>{t}</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: t === tipoCambioRefEUR ? "var(--yellow)" : "var(--text)" }}>
+                      <div style={{ fontSize: 9, color: t === tipoCambioRefEUR ? "var(--yellow)" : "var(--muted)", textTransform: "uppercase", marginBottom: 6, transition: "color 0.2s" }}>{t}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: t === tipoCambioRefEUR ? "var(--yellow)" : "var(--muted)" }}>
                         {val ? `$${val.toLocaleString("es-AR")}` : "—"}
                       </div>
                     </div>

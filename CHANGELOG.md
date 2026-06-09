@@ -5,6 +5,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [1.9.0] — 2026-06-08
+
+### Changed
+- Toggle redesñado: knob blanco con sombra, glow en activo, animación spring
+- Cotización USD/EUR: contraste entre oficial/blue más suave (mismo fondo, diferencia por borde y color)
+- Orden cotización en nuevo movimiento +USD: oficial primero, blue después
+- Barra "Meta por período": color amarillo
+
+---
+
 ## [1.8.0] — 2026-06-08
 
 ### Added

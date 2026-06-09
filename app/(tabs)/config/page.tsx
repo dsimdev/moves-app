@@ -37,14 +37,18 @@ const SECCION_LABEL: Record<string, string> = {
 function Toggle({ activo, onClick }: { activo: boolean; onClick: () => void }) {
   return (
     <div onClick={onClick} style={{
-      width: 40, height: 22, borderRadius: 11,
-      background: activo ? "var(--accent)" : "var(--faint)",
-      position: "relative", cursor: "pointer", transition: "background .2s", flexShrink: 0,
+      width: 44, height: 26, borderRadius: 13,
+      background: activo ? "var(--accent)" : "var(--border)",
+      boxShadow: activo ? "0 0 0 3px var(--accent)30" : "inset 0 1px 3px rgba(0,0,0,0.15)",
+      position: "relative", cursor: "pointer",
+      transition: "background .25s, box-shadow .25s", flexShrink: 0,
     }}>
       <div style={{
-        position: "absolute", top: 3, left: activo ? 20 : 3,
-        width: 16, height: 16, borderRadius: 8,
-        background: "var(--text)", transition: "left .15s",
+        position: "absolute", top: 3, left: activo ? 21 : 3,
+        width: 20, height: 20, borderRadius: "50%",
+        background: "#fff",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(0,0,0,0.06)",
+        transition: "left .22s cubic-bezier(0.34,1.56,0.64,1)",
       }} />
     </div>
   );

@@ -207,7 +207,7 @@ export default function MovimientosPage() {
        { id: "ahorros", nombre: "Ahorros", tipo: "Ingreso" as const, activa: true }]
     : [];
 
-  const cotizActual = cotizManual ? parseFloat(cotizManual) : cotizacion?.blue ?? 0;
+  const cotizActual = cotizManual ? parseFloat(cotizManual) : cotizacion?.oficial ?? 0;
   // GastoFX: sólo divisa, no ARS. CompraFX: bidireccional divisa↔ARS
   const usdFinal = !esUSD ? 0 : esGastoFX
     ? parseFloat(cantidadUSD || "0")
@@ -512,16 +512,16 @@ export default function MovimientosPage() {
 
                 <div className="label">Cotización</div>
                 <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-                  {cotizacion ? (["blue", "oficial"] as const).map(t => {
+                  {cotizacion ? (["oficial", "blue"] as const).map(t => {
                     const val = esCompraEUR
                       ? (t === "oficial" ? cotizacion.oficial_euro : cotizacion.blue_euro) ?? cotizacion[t]
                       : cotizacion[t];
                     return (
                       <button key={t} type="button" onClick={() => setCotizManual(String(val))}
                         className="pill" style={{
-                          borderColor: (cotizManual === String(val) || (!cotizManual && t === "blue")) ? "var(--yellow)" : "var(--border)",
-                          background: (cotizManual === String(val) || (!cotizManual && t === "blue")) ? "var(--yellow-dim)" : "transparent",
-                          color: (cotizManual === String(val) || (!cotizManual && t === "blue")) ? "var(--yellow)" : "var(--muted)",
+                          borderColor: (cotizManual === String(val) || (!cotizManual && t === "oficial")) ? "var(--yellow)" : "var(--border)",
+                          background: (cotizManual === String(val) || (!cotizManual && t === "oficial")) ? "var(--yellow-dim)" : "transparent",
+                          color: (cotizManual === String(val) || (!cotizManual && t === "oficial")) ? "var(--yellow)" : "var(--muted)",
                         }}>{t} ${val.toLocaleString("es-AR")}</button>
                     );
                   }) : <span style={{ fontSize: 12, color: "var(--muted)" }}>Sin cotización</span>}
@@ -538,7 +538,7 @@ export default function MovimientosPage() {
                   </div>
                   <div>
                     <div className="label">Cotización</div>
-                    <input className="input" type="number" value={cotizManual || String(cotizacion?.blue ?? "")} onChange={e => setCotizManual(e.target.value)} placeholder="0" />
+                    <input className="input" type="number" value={cotizManual || String(cotizacion?.oficial ?? "")} onChange={e => setCotizManual(e.target.value)} placeholder="0" />
                   </div>
                 </div>
 
