@@ -28,6 +28,12 @@ export default function Dashboard() {
   const { oculto, toggle: toggleOculto, m: money } = useMoney();
 
   const periodos = useMemo(() => agruparPorPeriodo(movimientos), [movimientos]);
+  const ultimoCargado = useMemo(() => {
+    if (movimientos.length === 0) return null;
+    return movimientos.reduce((a, b) =>
+      new Date(a.timestampCarga).getTime() > new Date(b.timestampCarga).getTime() ? a : b
+    ).timestampCarga;
+  }, [movimientos]);
   const serie = useMemo(() => serieTendencia(periodos, config?.meta.ahorrosAcumSeedPeriodoId), [periodos, config?.meta.ahorrosAcumSeedPeriodoId]);
   const p = periodos[0];
   const ahorrosAcum = serie.length ? serie[serie.length - 1].ahorrosAcum : 0;
@@ -35,6 +41,7 @@ export default function Dashboard() {
   // % disponible sobre el sueldo del período (cuánto queda, no lo gastado)
   const pctDisp = p && p.sueldo > 0 ? Math.round((p.disponible / p.sueldo) * 100) : 0;
   const barColor = pctDisp < 10 ? "var(--red)" : pctDisp < 50 ? "var(--yellow)" : "var(--green)";
+  const barColorDim = pctDisp < 10 ? "var(--red-dim)" : pctDisp < 50 ? "var(--yellow-dim)" : "var(--green-dim)";
 
   return (
     <div className="page">
@@ -62,7 +69,7 @@ export default function Dashboard() {
       ) : (
         <div className="fade-up">
           {/* Hero */}
-          <div className="soft" style={{ borderColor: `${barColor}44`, marginBottom: 12, background: `linear-gradient(135deg, var(--surface) 0%, ${barColor}0d 100%)` }}>
+          <div className="soft" style={{ borderColor: `${barColor}44`, marginBottom: 12, background: `linear-gradient(135deg, var(--surface) 0%, ${barColorDim} 100%)` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 7 }}>Disponible</div>
@@ -96,7 +103,7 @@ export default function Dashboard() {
               { label: "Sueldo", value: money(p.sueldo), color: "var(--green)" },
               { label: "Extras", value: p.extras > 0 ? money(p.extras) : "—", color: "var(--green)" },
             ].map((k) => (
-              <div key={k.label} className="soft" style={{ padding: 15 }}>
+              <div key={k.label} className="soft" style={{ padding: 15, background: "linear-gradient(135deg, var(--surface), var(--surface-alt))" }}>
                 <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 7 }}>{k.label}</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: k.color, fontFamily: "var(--font-mono)" }}>{k.value}</div>
               </div>
@@ -104,8 +111,15 @@ export default function Dashboard() {
           </div>
 
           {/* Últimos movimientos */}
-          <div className="soft">
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Últimos movimientos</div>
+          <div className="soft" style={{ background: "linear-gradient(135deg, var(--surface), var(--surface-alt))" }}>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>Últimos movimientos</div>
+              {ultimoCargado && (
+                <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>
+                  Último: {new Date(ultimoCargado).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Argentina/Buenos_Aires" })}
+                </div>
+              )}
+            </div>
             {ultimos.length === 0 ? (
               <div style={{ fontSize: 12, color: "var(--muted)", textAlign: "center", padding: "16px 0" }}>Sin movimientos</div>
             ) : ultimos.map((m) => (

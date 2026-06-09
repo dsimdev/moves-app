@@ -5,6 +5,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [1.7.0] — 2026-06-08
+
+### Fixed
+- Bug en carga de Ahorros: descripción mostraba "Ahorros" en vez del origen (ej. "Osansi")
+- Bug en edición de movimiento Ahorros: descripción aparecía vacía en el modal de edición
+- Fecha del formulario de nuevo movimiento usaba UTC en vez de hora local, causando salto de día a partir de las 21hs
+- Timestamps en toda la app convertidos a formato 24hs (sin AM/PM)
+
+### Changed
+- Timestamp "Último movimiento" movido al Dashboard, debajo de "Últimos movimientos"
+- Gradients de fondo aplicados a: cards KPI del Dashboard, Últimos movimientos, card de movimientos, card Disponible (color dinámico según porcentaje)
+
+---
+
 ## [1.6.0] — 2026-06-08
 
 ### Added

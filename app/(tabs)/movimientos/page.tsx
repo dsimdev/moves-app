@@ -135,15 +135,6 @@ export default function MovimientosPage() {
   const serie = useMemo(() => serieTendencia(periodos, config?.meta.ahorrosAcumSeedPeriodoId), [periodos, config?.meta.ahorrosAcumSeedPeriodoId]);
   const ahorrosAcumActivo = serie.find(s => s.periodoId === activePeriodoId)?.ahorrosAcum ?? 0;
 
-  const ultimoCargado = useMemo(() => {
-    if (movimientos.length === 0) return null;
-    return movimientos.reduce((a, b) => {
-      const ta = new Date(a.timestampCarga).getTime();
-      const tb = new Date(b.timestampCarga).getTime();
-      return ta > tb ? a : b;
-    }).timestampCarga;
-  }, [movimientos]);
-
   // ── Modal: "add" | "edit" | "delete" | null
   const [modal, setModal] = useState<"add" | "edit" | "delete" | null>(null);
   const [movSel, setMovSel] = useState<Movimiento | null>(null);
@@ -153,7 +144,10 @@ export default function MovimientosPage() {
   const [categoria, setCategoria] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [monto, setMonto] = useState("");
-  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
+  const [fecha, setFecha] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  });
   const [medioPago, setMedioPago] = useState("Mercado Pago");
   const [observaciones, setObservaciones] = useState("");
   const [origenAhorro, setOrigenAhorro] = useState("");
@@ -247,7 +241,8 @@ export default function MovimientosPage() {
     setDescripcion(""); setMonto(""); setCategoria(""); setOrigenAhorro("");
     setCantidadUSD(""); setCotizManual(""); setObservaciones(""); setAddError("");
     setMontoARSInput(""); setModoCarga("USD");
-    setFecha(new Date().toISOString().split("T")[0]);
+    const now = new Date();
+    setFecha(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`);
   };
 
   const openAdd = () => { resetAdd(); setTipo("Gasto"); setModal("add"); };
@@ -255,7 +250,7 @@ export default function MovimientosPage() {
   const openEdit = (m: Movimiento) => {
     setMovSel(m);
     setEMonto(String(m.monto));
-    setEDesc(m.descripcion ?? "");
+    setEDesc(m.descripcion || (m as Movimiento & { origenAhorro?: string }).origenAhorro || "");
     setEMedio(m.medioPago ?? "");
     setEObs(m.observaciones ?? "");
     setModal("edit");
@@ -278,7 +273,7 @@ export default function MovimientosPage() {
       await crearMovimiento(user.uid, {
         timestampCarga: new Date(), fecha, tipo,
         categoria: esMove ? "Move" : esCompraFX ? tipo : esGastoFX ? tipo : categoria,
-        descripcion: esMove ? "Move a disponible" : esCompraFX ? `Compra ${fxLabel}` : esGastoFX ? `Gasto ${fxLabel}` : descripcion.trim(),
+        descripcion: esMove ? "Move a disponible" : esCompraFX ? `Compra ${fxLabel}` : esGastoFX ? `Gasto ${fxLabel}` : esAhorros ? (origenAhorro || descripcion.trim()) : descripcion.trim(),
         monto: montoFinal,
         medioPago: esMove || esCompraFX ? "Mercado Pago" : esGastoFX ? "—" : medioPago,
         observaciones, periodoId: periodoActual.periodoId, userId: user.uid,
@@ -330,11 +325,6 @@ export default function MovimientosPage() {
       <div style={{ marginBottom: 20 }}>
         <div className="label" style={{ marginBottom: 2 }}>Gestión</div>
         <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5, display: "inline-block", background: "linear-gradient(110deg, var(--blue) 10%, var(--green) 90%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Movimientos</div>
-        {ultimoCargado && (
-          <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>
-            Último: {new Date(ultimoCargado).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" })}
-          </div>
-        )}
         {periodoActual && (
           <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 6 }}>
             Disponible: <span style={{ color: "var(--green)", fontFamily: "var(--font-mono)" }}>{money(periodoActual.disponible)}</span>
@@ -386,7 +376,7 @@ export default function MovimientosPage() {
           No hay movimientos. Usá + para agregar.
         </div>
       ) : (
-        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+        <div className="card" style={{ padding: 0, overflow: "hidden", background: "linear-gradient(135deg, var(--surface), var(--surface-alt))" }}>
           {movsFiltrados.map((m, i) => {
             const isGasto = m.tipo === "Gasto" || m.tipo === "CompraUSD" || m.tipo === "CompraEUR";
             return (
@@ -653,15 +643,15 @@ export default function MovimientosPage() {
               ))}
             </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <div className="label">Monto</div>
-              <input className="input" style={{ fontFamily: "var(--font-mono)" }} type="number" value={eMonto} onChange={e => setEMonto(e.target.value)} />
-            </div>
             {!isLocked && (
               <>
                 <div style={{ marginBottom: 14 }}>
                   <div className="label">Descripción</div>
                   <input className="input" value={eDesc} onChange={e => setEDesc(e.target.value)} />
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <div className="label">Monto</div>
+                  <input className="input" style={{ fontFamily: "var(--font-mono)" }} type="number" value={eMonto} onChange={e => setEMonto(e.target.value)} />
                 </div>
                 <div style={{ marginBottom: 14 }}>
                   <div className="label">Medio de pago</div>
@@ -676,6 +666,12 @@ export default function MovimientosPage() {
                   </div>
                 </div>
               </>
+            )}
+            {isLocked && (
+              <div style={{ marginBottom: 14 }}>
+                <div className="label">Monto</div>
+                <input className="input" style={{ fontFamily: "var(--font-mono)" }} type="number" value={eMonto} onChange={e => setEMonto(e.target.value)} />
+              </div>
             )}
             <div style={{ marginBottom: 24 }}>
               <div className="label">Observaciones</div>
