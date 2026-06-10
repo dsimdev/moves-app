@@ -4,6 +4,13 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.12.3] — 2026-06-09
+
+### Fixed
+- Config > App: GitHub link now points directly to README.md instead of the repo root
+
+---
+
 ## [1.12.2] — 2026-06-09
 
 ### Fixed
