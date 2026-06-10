@@ -401,7 +401,7 @@ export default function MovimientosPage() {
                               {m.descripcion || m.categoria}
                             </div>
                             <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                              {m.categoria}
+                              {m.categoria}{m.observaciones && <span style={{ fontStyle: "italic" }}> · {m.observaciones.toLowerCase()}</span>}
                             </div>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>

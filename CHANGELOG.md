@@ -4,6 +4,13 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.13.1] — 2026-06-10
+
+### Changed
+- Movimientos: observación visible en el subtítulo de cada movimiento, en minúscula e itálica
+
+---
+
 ## [1.13.0] — 2026-06-10
 
 ### Added
