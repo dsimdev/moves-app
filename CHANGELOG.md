@@ -7,24 +7,24 @@ All notable changes to FinMoves are documented here.
 ## [1.13.1] — 2026-06-10
 
 ### Changed
-- Movimientos: observación visible en el subtítulo de cada movimiento, en minúscula e itálica
+- Movements: observation shown in the subtitle of each movement row — lowercase and italic
 
 ---
 
 ## [1.13.0] — 2026-06-10
 
 ### Added
-- Movimientos: lista agrupada por fecha con header de día entre grupos (patrón estándar de apps de finanzas)
+- Movements: list grouped by date with a day header between groups (standard finance app pattern)
 
 ### Changed
-- Movimientos: fecha eliminada del subtítulo de cada movimiento (ya se muestra en el header del grupo)
-- Movimientos: ordenamiento por `fecha` desc → `timestampCarga` desc dentro del mismo día
-- Movimientos / Reportes: todas las filas de pills con `touchAction: pan-x` para scroll horizontal en mobile
-- Reportes: pills de período y año unificadas al mismo tamaño (`10px`, `700`, `4px 12px`)
-- Movimientos: pills de período unificadas al tamaño de las pills de año
+- Movements: date removed from each movement row subtitle (already shown in the group header)
+- Movements: sorted by `fecha` desc → `timestampCarga` desc within the same day
+- Movements / Reports: all pill rows use `touchAction: pan-x` for reliable horizontal scroll on mobile
+- Reports: period and year pills unified to the same size (`10px`, `700`, `4px 12px`)
+- Movements: period pills unified to match year pill size
 
 ### Fixed
-- Reportes: ring del multi-select (box-shadow `0 0 0 2px`) ya no se corta — padding agregado al container de período y año
+- Reports: multi-select ring (`box-shadow 0 0 0 2px`) no longer clipped — padding added to period and year pill containers
 
 ---
 
