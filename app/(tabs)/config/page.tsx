@@ -482,8 +482,39 @@ export default function ConfigPage() {
           <div className="card">
             <div className="label" style={{ marginBottom: 16 }}>Generales</div>
 
+            {/* Theme mode */}
+            <div className="row" style={{ padding: "12px 0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: dark ? "var(--surface-alt)" : "var(--yellow-dim)",
+                  border: "1px solid var(--border)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  {dark ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z" stroke="var(--muted)" strokeWidth="1.7" strokeLinejoin="round" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="4" stroke="var(--yellow)" strokeWidth="1.7" />
+                      <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="var(--yellow)" strokeWidth="1.7" strokeLinecap="round" />
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>Modo oscuro</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                    {dark ? "Cambiá a tema claro" : "Cambiá a tema oscuro"}
+                  </div>
+                </div>
+              </div>
+              <Toggle activo={dark} onClick={toggleTheme} />
+            </div>
+
             {/* Moneda principal */}
-            <div style={{ padding: "12px 0", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ padding: "12px 0", borderTop: "1px solid var(--faint)", display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{
                 width: 36, height: 36, borderRadius: 10,
                 background: "var(--accent-dim)", border: "1px solid var(--accent)44",
@@ -497,6 +528,37 @@ export default function ConfigPage() {
                 <div style={{ fontSize: 13, fontWeight: 500 }}>Moneda principal</div>
                 <span className="badge" style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--accent)44" }}>{monedaPrincipal}</span>
               </div>
+            </div>
+
+            {/* Reportes */}
+            <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: showReportes ? "var(--green-dim)" : "var(--red-dim)",
+                  border: `1px solid ${showReportes ? "var(--green)44" : "var(--red)44"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke={showReportes ? "var(--green)" : "var(--red)"} strokeWidth="1.7" />
+                    <path d="M3 9h18M9 3v18" stroke={showReportes ? "var(--green)" : "var(--red)"} strokeWidth="1.7" />
+                  </svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>Reportes</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>Mostrar sección de reportes</div>
+                </div>
+              </div>
+              <Toggle activo={showReportes} onClick={() => {
+                const next = !showReportes;
+                setPref("showReportes", next);
+                if (next) {
+                  const reset: Record<string, boolean> = {};
+                  REPORTES_TOGGLES.forEach(r => { reset[r.id] = true; });
+                  saveReportes(reset);
+                  setLocalReportes(reset);
+                }
+              }} />
             </div>
 
             {/* Inversión */}
@@ -563,81 +625,19 @@ export default function ConfigPage() {
             </div>
             )}
 
-            {/* Reportes */}
-            <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  background: showReportes ? "var(--green-dim)" : "var(--red-dim)",
-                  border: `1px solid ${showReportes ? "var(--green)44" : "var(--red)44"}`,
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="3" width="18" height="18" rx="2" stroke={showReportes ? "var(--green)" : "var(--red)"} strokeWidth="1.7" />
-                    <path d="M3 9h18M9 3v18" stroke={showReportes ? "var(--green)" : "var(--red)"} strokeWidth="1.7" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>Reportes</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>Mostrar sección de reportes</div>
-                </div>
-              </div>
-              <Toggle activo={showReportes} onClick={() => {
-                const next = !showReportes;
-                setPref("showReportes", next);
-                if (next) {
-                  const reset: Record<string, boolean> = {};
-                  REPORTES_TOGGLES.forEach(r => { reset[r.id] = true; });
-                  saveReportes(reset);
-                  setLocalReportes(reset);
-                }
-              }} />
-            </div>
-
-            {/* Theme mode */}
-            <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  background: dark ? "var(--surface-alt)" : "var(--yellow-dim)",
-                  border: "1px solid var(--border)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
-                }}>
-                  {dark ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z" stroke="var(--muted)" strokeWidth="1.7" strokeLinejoin="round" />
-                    </svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="4" stroke="var(--yellow)" strokeWidth="1.7" />
-                      <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="var(--yellow)" strokeWidth="1.7" strokeLinecap="round" />
-                    </svg>
-                  )}
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>Modo oscuro</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                    {dark ? "Cambiá a tema claro" : "Cambiá a tema oscuro"}
-                  </div>
-                </div>
-              </div>
-              <Toggle activo={dark} onClick={toggleTheme} />
-            </div>
-
             {/* Auto-ahorro */}
             <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: 10,
-                  background: config.meta.autoAhorro?.activo ? "var(--blue-dim)" : "var(--surface-alt)",
-                  border: `1px solid ${config.meta.autoAhorro?.activo ? "var(--blue)44" : "var(--border)"}`,
+                  background: config.meta.autoAhorro?.activo ? "var(--green-dim)" : "var(--red-dim)",
+                  border: `1px solid ${config.meta.autoAhorro?.activo ? "var(--green)44" : "var(--red)44"}`,
                   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                 }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9" stroke={config.meta.autoAhorro?.activo ? "var(--blue)" : "var(--muted)"} strokeWidth="1.7" strokeLinecap="round" />
-                    <path d="M16 3h5v5" stroke={config.meta.autoAhorro?.activo ? "var(--blue)" : "var(--muted)"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M12 8v4l3 3" stroke={config.meta.autoAhorro?.activo ? "var(--blue)" : "var(--muted)"} strokeWidth="1.7" strokeLinecap="round" />
+                    <path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9" stroke={config.meta.autoAhorro?.activo ? "var(--green)" : "var(--red)"} strokeWidth="1.7" strokeLinecap="round" />
+                    <path d="M16 3h5v5" stroke={config.meta.autoAhorro?.activo ? "var(--green)" : "var(--red)"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M12 8v4l3 3" stroke={config.meta.autoAhorro?.activo ? "var(--green)" : "var(--red)"} strokeWidth="1.7" strokeLinecap="round" />
                   </svg>
                 </div>
                 <div>
