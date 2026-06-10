@@ -1,6 +1,6 @@
 # FinMoves
 
-Personal finance manager for Argentina. Track movements, monitor your dollar investment and analyze trends by period.
+Personal finance manager for Argentina. Track movements, monitor your investment reserve and analyze spending by period.
 
 ## Stack
 
@@ -14,40 +14,40 @@ Personal finance manager for Argentina. Track movements, monitor your dollar inv
 ## Sections
 
 ### Home — Dashboard
-Active period summary: available vs salary, expense progress bar, latest movements and total accumulated savings.
+Active period summary: Sueldo, Gastado, Ahorros and Retiros KPIs; expense progress bar; latest movements grouped by date.
 
-### Movements
-Full CRUD for movements. Supported types:
+### Movements (`/movimientos`)
+Full CRUD for movements, grouped by date with day headers. Supported types:
 
 | Type | Description |
 |------|-------------|
 | `Gasto` | Expense in ARS |
 | `Ingreso` | Income (salary or other) |
-| `Move` | Internal transfer between accounts |
+| `Move` | Internal transfer (savings → available) |
 | `CompraUSD` | USD purchase (records amount + exchange rate) |
 | `GastoUSD` | USD expense |
 | `CompraEUR` | EUR purchase (records amount + exchange rate) |
 | `GastoEUR` | EUR expense |
 
-Each movement has: date, category, description, amount, payment method, notes and the period it belongs to.
+Each movement has: date, category, description, amount, payment method, notes and the period it belongs to. Notes are shown inline in lowercase italic.
 
-### Investment
+### Investment (`/inversion`)
 USD or EUR reserve tracking:
 - Total reserve and average purchase price
 - ARS gain/loss on investment
 - Blue and official exchange rates in real time (with cache fallback)
-- Savings goal with target date and progress
-- Monthly goal per period
+- Savings goal with target date, progress bar and periods-to-goal projection
+- 3-period ARS savings projection
 - Purchase history
 
-### Reports
-Period analysis with configurable toggles per section:
-- **Expenses**: KPIs (total, average, daily pace), by category, by description, by payment method, by date, period comparison
-- **Income**: total income, by category, origin breakdown
-- **Periods**: historical series, comparative KPIs
-- **Trends**: expense projection, salary evolution, USD savings projection, goal progress
+### Reports (`/reportes`)
+Period analysis with configurable toggles per section. Tabs:
+- **Gastos**: KPIs (total, average, daily pace, trend), by category, by description, by payment method, by date, period comparison
+- **Ingresos**: total income, salary evolution, by category, by description, savings breakdown
+- **Movimientos**: movement frequency KPIs by type, top descriptions, by category, by day of week, by payment method
+- **Períodos**: historical series chart, comparative KPIs (best/worst period, average), income evolution
 
-### Settings
+### Settings (`/config`)
 - Categories, payment methods and savings origins (CRUD)
 - Preferences: dark/light mode, enable Reports section, enable Investment section
 - Investment currency: USD or EUR
@@ -55,7 +55,7 @@ Period analysis with configurable toggles per section:
 
 ## Periods
 
-Movements are grouped into periods with a start/end date and declared salary. The active period is the main unit of analysis. Report KPIs compare periods against each other.
+Movements are grouped into periods with a start/end date and declared salary. The active period is the main unit of analysis. Report KPIs compare periods against each other. Period and year selectors support multi-select (long press) for cross-period analysis.
 
 ## Google Sheets Sync
 
