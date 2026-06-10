@@ -159,32 +159,6 @@ export default function DolaresPage() {
             )}
           </div>
 
-          <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div className="label" style={{ marginBottom: 0 }}>Cotización USD</div>
-              <div style={{ fontSize: 9, color: "var(--muted)" }}>
-                {cotizacion && minutosDesdeActualizacion != null ? `hace ${minutosDesdeActualizacion} min` : "sin datos"}
-              </div>
-            </div>
-            {cotizacion ? (
-              <div style={{ display: "flex", gap: 8 }}>
-                {(["oficial", "blue"] as const).map((t) => (
-                  <div key={t} onClick={() => { setTipoCambioSelUSD(t); if (user?.uid) actualizarTipoCambio(user.uid, t); }}
-                    style={{
-                      flex: 1, cursor: "pointer",
-                      background: "var(--surface-alt)",
-                      border: `1px solid ${t === tipoCambioRefUSD ? "var(--yellow)66" : "var(--border)"}`,
-                      borderRadius: "var(--radius-sm)", padding: "10px 8px", textAlign: "center", transition: "all 0.2s",
-                    }}>
-                    <div style={{ fontSize: 9, color: t === tipoCambioRefUSD ? "var(--yellow)" : "var(--muted)", textTransform: "uppercase", marginBottom: 6, transition: "color 0.2s" }}>{t}</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: t === tipoCambioRefUSD ? "var(--yellow)" : "var(--muted)" }}>
-                      {cotizacion[t] ? `$${cotizacion[t].toLocaleString("es-AR")}` : "—"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : <div style={{ fontSize: 12, color: "var(--muted)" }}>Sin datos. Verificá conexión.</div>}
-          </div>
           </>)}
 
           {/* ── SECCIÓN EUR ── */}
@@ -226,38 +200,47 @@ export default function DolaresPage() {
             )}
           </div>
 
-          <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div className="label" style={{ marginBottom: 0 }}>Cotización EUR</div>
-              <div style={{ fontSize: 9, color: "var(--muted)" }}>
-                {cotizacion && minutosDesdeActualizacion != null ? `hace ${minutosDesdeActualizacion} min` : "sin datos"}
-              </div>
-            </div>
-            {cotizacion ? (
-              <div style={{ display: "flex", gap: 8 }}>
-                {(["oficial", "blue"] as const).map((t) => {
-                  const val = t === "oficial" ? cotizacion.oficial_euro : cotizacion.blue_euro;
-                  return (
-                    <div key={t} onClick={() => setTipoCambioSelEUR(t)}
-                      style={{
-                        flex: 1, cursor: "pointer",
-                        background: "var(--surface-alt)",
-                        border: `1px solid ${t === tipoCambioRefEUR ? "var(--yellow)66" : "var(--border)"}`,
-                        borderRadius: "var(--radius-sm)", padding: "10px 8px", textAlign: "center", transition: "all 0.2s",
-                      }}>
-                      <div style={{ fontSize: 9, color: t === tipoCambioRefEUR ? "var(--yellow)" : "var(--muted)", textTransform: "uppercase", marginBottom: 6, transition: "color 0.2s" }}>{t}</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: t === tipoCambioRefEUR ? "var(--yellow)" : "var(--muted)" }}>
-                        {val ? `$${val.toLocaleString("es-AR")}` : "—"}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : <div style={{ fontSize: 12, color: "var(--muted)" }}>Sin datos. Verificá conexión.</div>}
-          </div>
           </>)}
 
-          {/* Meta por período — solo si hay meta de ahorro activa */}
+          {/* Meta de ahorro */}
+          {config?.meta.metaMonto && (
+            <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div className="label" style={{ marginBottom: 0 }}>Meta de ahorro</div>
+                {config.meta.metaFecha && <div style={{ fontSize: 9, color: "var(--muted)" }}>{fechaCortaConAnio(config.meta.metaFecha)}</div>}
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>Objetivo {monedaInversiones}</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
+                  {simbolo} {config.meta.metaMonto.toLocaleString("es-AR")}
+                </div>
+              </div>
+              {(() => {
+                const falta = Math.max(0, config.meta.metaMonto - totalDisplay);
+                const pctMeta = Math.min((totalDisplay / config.meta.metaMonto) * 100, 100);
+                const metaAlcanzada = falta <= 0;
+                return (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderTop: "1px solid var(--faint)", marginBottom: 8 }}>
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>Ahorrado</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>{simbolo} {oculto ? "••" : totalDisplay.toFixed(2)}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", marginBottom: 12 }}>
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>Falta</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: metaAlcanzada ? "var(--green)" : "var(--yellow)", fontFamily: "var(--font-mono)" }}>
+                        {simbolo} {oculto ? "••" : (metaAlcanzada ? "0.00" : falta.toFixed(2))}
+                      </span>
+                    </div>
+                    <div className="progress-track">
+                      <div className="progress-fill" style={{ width: `${pctMeta}%`, background: metaAlcanzada ? "var(--green)" : "var(--yellow)" }} />
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Meta por período */}
           {config?.meta.metaMonto && (
           <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
@@ -282,39 +265,6 @@ export default function DolaresPage() {
               }} />
             </div>
           </div>
-          )}
-
-          {/* Meta de ahorro */}
-          {config?.meta.metaMonto && (
-            <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <div className="label" style={{ marginBottom: 0 }}>Meta de ahorro</div>
-                {config.meta.metaFecha && <div style={{ fontSize: 9, color: "var(--muted)" }}>{fechaCortaConAnio(config.meta.metaFecha)}</div>}
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>Objetivo {monedaInversiones}</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                  {simbolo} {config.meta.metaMonto.toLocaleString("es-AR")}
-                </div>
-              </div>
-              {(() => {
-                const falta = Math.max(0, config.meta.metaMonto - totalDisplay);
-                return (
-                  <>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderTop: "1px solid var(--faint)", marginBottom: 8 }}>
-                      <span style={{ fontSize: 11, color: "var(--muted)" }}>Ahorrado</span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>{simbolo} {oculto ? "••" : totalDisplay.toFixed(2)}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0" }}>
-                      <span style={{ fontSize: 11, color: "var(--muted)" }}>Falta</span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: falta <= 0 ? "var(--green)" : "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                        {simbolo} {oculto ? "••" : (falta <= 0 ? "0.00" : falta.toFixed(2))}
-                      </span>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
           )}
 
           {/* Tendencias inversión */}

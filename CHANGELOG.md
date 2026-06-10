@@ -4,6 +4,16 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.12.1] — 2026-06-09
+
+### Fixed
+- Inversión: **Meta de ahorro** card now appears above **Meta por período** (was reversed)
+- Inversión: **Meta de ahorro** card now includes a progress bar (yellow → green when goal reached)
+- Reports URL renamed `/resumen` → `/reportes`; folder and navbar link updated
+- LoadingSpinner: removed double `borderRadius` on favicon image (PNG already has built-in rounded corners)
+
+---
+
 ## [1.12.0] — 2026-06-09
 
 ### Added
