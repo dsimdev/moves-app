@@ -4,6 +4,23 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.13.0] — 2026-06-10
+
+### Added
+- Movimientos: lista agrupada por fecha con header de día entre grupos (patrón estándar de apps de finanzas)
+
+### Changed
+- Movimientos: fecha eliminada del subtítulo de cada movimiento (ya se muestra en el header del grupo)
+- Movimientos: ordenamiento por `fecha` desc → `timestampCarga` desc dentro del mismo día
+- Movimientos / Reportes: todas las filas de pills con `touchAction: pan-x` para scroll horizontal en mobile
+- Reportes: pills de período y año unificadas al mismo tamaño (`10px`, `700`, `4px 12px`)
+- Movimientos: pills de período unificadas al tamaño de las pills de año
+
+### Fixed
+- Reportes: ring del multi-select (box-shadow `0 0 0 2px`) ya no se corta — padding agregado al container de período y año
+
+---
+
 ## [1.12.3] — 2026-06-09
 
 ### Fixed

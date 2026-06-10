@@ -226,9 +226,22 @@ export default function MovimientosPage() {
   );
 
   const movsFiltrados = useMemo(() =>
-    [...(periodoActual?.movimientos ?? [])].sort((a, b) => b.timestampCarga.getTime() - a.timestampCarga.getTime()),
+    [...(periodoActual?.movimientos ?? [])].sort((a, b) => {
+      const d = b.fecha.localeCompare(a.fecha);
+      return d !== 0 ? d : b.timestampCarga.getTime() - a.timestampCarga.getTime();
+    }),
     [periodoActual]
   );
+
+  const movsPorFecha = useMemo(() => {
+    const groups: { fecha: string; movs: typeof movsFiltrados }[] = [];
+    for (const m of movsFiltrados) {
+      if (groups.length === 0 || groups[groups.length - 1].fecha !== m.fecha)
+        groups.push({ fecha: m.fecha, movs: [] });
+      groups[groups.length - 1].movs.push(m);
+    }
+    return groups;
+  }, [movsFiltrados]);
 
   const resetAdd = () => {
     setDescripcion(""); setMonto(""); setCategoria(""); setOrigenAhorro("");
@@ -335,7 +348,7 @@ export default function MovimientosPage() {
             )}
           </div>
 
-          <div style={{ display: "flex", gap: 4, marginBottom: 8, overflowX: "auto", scrollbarWidth: "none" }}>
+          <div style={{ display: "flex", gap: 4, marginBottom: 8, overflowX: "auto", scrollbarWidth: "none", touchAction: "pan-x" }}>
             {años.map(año => (
               <button key={año} onClick={() => { setAñoSel(año); setPeriodoSel(null); }} style={{
                 flexShrink: 0, padding: "4px 12px", borderRadius: 999, fontSize: 10, fontWeight: 700, cursor: "pointer",
@@ -346,13 +359,13 @@ export default function MovimientosPage() {
               }}>{año}</button>
             ))}
           </div>
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 16, paddingBottom: 2, scrollbarWidth: "none" }}>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 16, paddingBottom: 2, scrollbarWidth: "none", touchAction: "pan-x" }}>
             {periodosDelAño.map(p => {
               const isSelected = activePeriodoId === p.periodoId;
               const [d, m] = p.periodoId.split("/");
               return (
                 <button key={p.periodoId} onClick={() => setPeriodoSel(p.periodoId)} style={{
-                  flexShrink: 0, padding: "5px 12px", borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  flexShrink: 0, padding: "4px 12px", borderRadius: 999, fontSize: 10, fontWeight: 700, cursor: "pointer",
                   border: `1px solid ${isSelected ? "var(--green)" : "var(--border)"}`,
                   background: isSelected ? "var(--green-dim)" : "transparent",
                   color: isSelected ? "var(--green)" : "var(--muted)",
@@ -367,38 +380,47 @@ export default function MovimientosPage() {
               No hay movimientos. Usá + para agregar.
             </div>
           ) : (
-        <div className="card" style={{ padding: 0, overflow: "hidden", background: "linear-gradient(135deg, var(--surface), var(--surface-alt))" }}>
-          {movsFiltrados.map((m, i) => {
-            const isGasto = m.tipo === "Gasto" || m.tipo === "CompraUSD" || m.tipo === "CompraEUR";
-            const isMove = m.tipo === "Move";
-            return (
-              <div key={m.id} style={{
-                display: "flex", alignItems: "flex-start", gap: 10, padding: "13px 14px",
-                borderBottom: i < movsFiltrados.length - 1 ? "1px solid var(--faint)" : "none",
-              }}>
-                <TipoDot tipo={m.tipo} categoria={m.categoria} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {m.descripcion || m.categoria}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {movsPorFecha.map(({ fecha, movs }) => (
+                <div key={fecha}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", marginBottom: 6, paddingLeft: 2, letterSpacing: 0.3 }}>
+                    {fechaCorta(fecha)}
                   </div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                    {m.categoria} · {fechaCorta(m.fecha)}
+                  <div className="card" style={{ padding: 0, overflow: "hidden", background: "linear-gradient(135deg, var(--surface), var(--surface-alt))" }}>
+                    {movs.map((m, i) => {
+                      const isGasto = m.tipo === "Gasto" || m.tipo === "CompraUSD" || m.tipo === "CompraEUR";
+                      const isMove = m.tipo === "Move";
+                      return (
+                        <div key={m.id} style={{
+                          display: "flex", alignItems: "flex-start", gap: 10, padding: "13px 14px",
+                          borderBottom: i < movs.length - 1 ? "1px solid var(--faint)" : "none",
+                        }}>
+                          <TipoDot tipo={m.tipo} categoria={m.categoria} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {m.descripcion || m.categoria}
+                            </div>
+                            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                              {m.categoria}
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: isGasto ? "var(--red)" : isMove ? "var(--yellow)" : "var(--green)", fontFamily: "var(--font-mono)" }}>
+                              {isGasto ? "-" : "+"}{money(m.monto)}
+                            </span>
+                            <button onClick={() => openEdit(m)} aria-label="Editar" style={{
+                              background: "none", border: "none",
+                              color: "var(--muted)", cursor: "pointer", padding: 6, flexShrink: 0,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}><PencilIcon /></button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: isGasto ? "var(--red)" : isMove ? "var(--yellow)" : "var(--green)", fontFamily: "var(--font-mono)" }}>
-                    {isGasto ? "-" : "+"}{money(m.monto)}
-                  </span>
-                  <button onClick={() => openEdit(m)} aria-label="Editar" style={{
-                    background: "none", border: "none",
-                    color: "var(--muted)", cursor: "pointer", padding: 6, flexShrink: 0,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}><PencilIcon /></button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              ))}
+            </div>
           )}
         </div>
       )}
