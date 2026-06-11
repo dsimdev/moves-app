@@ -4,6 +4,24 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.14.2] — 2026-06-10
+
+### Fixed
+- Settings: category, payment method and savings origin toggles debounced (1.5s) — multiple rapid taps produce a single Firestore write; eliminates app-wide lag while toggling
+- Settings > General: auto-savings configuration moved to a bottom-sheet modal — activating the toggle opens it; editing taps the row when active; removes layout shift from inline expand
+- Settings > General: auto-savings subtitle shows amount and payment methods (e.g. `$500 por gasto · Mercado Pago + Débito`)
+
+---
+
+## [1.14.1] — 2026-06-10
+
+### Changed
+- Settings > General: Modo oscuro moved to top of card
+- Settings > General: Reportes now listed above Inversión
+- Settings > General: Auto-savings icon uses green (active) / red (inactive), consistent with Inversión and Reportes
+
+---
+
 ## [1.14.0] — 2026-06-10
 
 ### Added

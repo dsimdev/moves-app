@@ -97,6 +97,10 @@ export default function ConfigPage() {
   const [localCats, setLocalCats] = useState<ConfigUsuario["categorias"]>([]);
   const [localMedios, setLocalMedios] = useState<ConfigUsuario["mediosPago"]>([]);
   const [localOrigenes, setLocalOrigenes] = useState<ConfigUsuario["origenesAhorro"]>([]);
+  const localCatsRef = useRef<ConfigUsuario["categorias"]>([]);
+  const localMediosRef = useRef<ConfigUsuario["mediosPago"]>([]);
+  const localOrigenesRef = useRef<ConfigUsuario["origenesAhorro"]>([]);
+  const movSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didInitMov = useRef(false);
 
   useEffect(() => {
@@ -104,6 +108,9 @@ export default function ConfigPage() {
       setLocalCats(config.categorias);
       setLocalMedios(config.mediosPago);
       setLocalOrigenes(config.origenesAhorro);
+      localCatsRef.current = config.categorias;
+      localMediosRef.current = config.mediosPago;
+      localOrigenesRef.current = config.origenesAhorro;
       didInitMov.current = true;
     }
   }, [config]);
@@ -131,8 +138,10 @@ export default function ConfigPage() {
 
   const localIsEnabled = (id: string) => localReportes[id] !== false;
 
-  // ── Auto-ahorro state ──
-  const [autoAhorroMonto, setAutoAhorroMonto] = useState("");
+  // ── Auto-ahorro modal state ──
+  const [showAutoAhorroModal, setShowAutoAhorroModal] = useState(false);
+  const [localAutoMonto, setLocalAutoMonto] = useState("");
+  const [localAutoMedios, setLocalAutoMedios] = useState<string[]>([]);
 
   // ── Ahorros state ──
   const [metaFecha, setMetaFecha] = useState("");
@@ -227,10 +236,6 @@ export default function ConfigPage() {
     }
   }, [config?.meta.monedaPrincipal]);
 
-  useEffect(() => {
-    if (config) setAutoAhorroMonto(config.meta.autoAhorro?.monto?.toString() ?? "");
-  }, [config?.meta.autoAhorro?.monto]);
-
   // ── Helpers ──
   const saveConfig = async (newConfig: typeof config) => {
     if (!user?.uid || !newConfig) return;
@@ -317,74 +322,92 @@ export default function ConfigPage() {
     }
   };
 
-  // ── Movimientos handlers (auto-save) ──
+  // ── Movimientos handlers ──
+  const scheduleMovSave = (config: ConfigUsuario) => {
+    if (movSaveTimer.current) clearTimeout(movSaveTimer.current);
+    movSaveTimer.current = setTimeout(() => {
+      saveConfig({ ...config, categorias: localCatsRef.current, mediosPago: localMediosRef.current, origenesAhorro: localOrigenesRef.current });
+    }, 1500);
+  };
+
+  // Toggles: debounced (UI responde inmediato, Firestore espera 1.5s)
   const toggleCategoriaLocal = (nombre: string) => {
     if (!config) return;
-    const next = localCats.map(c => c.nombre === nombre ? { ...c, activa: !c.activa } : c);
+    const next = localCatsRef.current.map(c => c.nombre === nombre ? { ...c, activa: !c.activa } : c);
+    localCatsRef.current = next;
     setLocalCats(next);
-    saveConfig({ ...config, categorias: next, mediosPago: localMedios, origenesAhorro: localOrigenes });
+    scheduleMovSave(config);
   };
 
   const toggleMedioLocal = (nombre: string) => {
     if (!config) return;
-    const next = localMedios.map(m => m.nombre === nombre ? { ...m, activo: !m.activo } : m);
+    const next = localMediosRef.current.map(m => m.nombre === nombre ? { ...m, activo: !m.activo } : m);
+    localMediosRef.current = next;
     setLocalMedios(next);
-    saveConfig({ ...config, categorias: localCats, mediosPago: next, origenesAhorro: localOrigenes });
+    scheduleMovSave(config);
   };
 
   const toggleOrigenLocal = (nombre: string) => {
     if (!config) return;
-    const next = localOrigenes.map(o => o.nombre === nombre ? { ...o, activo: !o.activo } : o);
+    const next = localOrigenesRef.current.map(o => o.nombre === nombre ? { ...o, activo: !o.activo } : o);
+    localOrigenesRef.current = next;
     setLocalOrigenes(next);
-    saveConfig({ ...config, categorias: localCats, mediosPago: localMedios, origenesAhorro: next });
+    scheduleMovSave(config);
   };
 
+  // Adds/deletes: inmediatos (acciones deliberadas)
   const agregarCategoriaLocal = () => {
     if (!nuevoNombre.trim() || !config) return;
-    const next = [...localCats, { id: nuevoNombre, nombre: nuevoNombre.trim(), tipo: nuevoTipo, activa: true }];
+    const next = [...localCatsRef.current, { id: nuevoNombre, nombre: nuevoNombre.trim(), tipo: nuevoTipo, activa: true }];
+    localCatsRef.current = next;
     setLocalCats(next);
     setNuevoNombre("");
-    saveConfig({ ...config, categorias: next, mediosPago: localMedios, origenesAhorro: localOrigenes });
+    saveConfig({ ...config, categorias: next, mediosPago: localMediosRef.current, origenesAhorro: localOrigenesRef.current });
   };
 
   const eliminarCategoriaLocal = (nombre: string) => {
     if (!config) return;
-    const next = localCats.filter(c => c.nombre !== nombre);
+    const next = localCatsRef.current.filter(c => c.nombre !== nombre);
+    localCatsRef.current = next;
     setLocalCats(next);
     setConfirmDelete(null);
-    saveConfig({ ...config, categorias: next, mediosPago: localMedios, origenesAhorro: localOrigenes });
+    saveConfig({ ...config, categorias: next, mediosPago: localMediosRef.current, origenesAhorro: localOrigenesRef.current });
   };
 
   const eliminarMedioLocal = (nombre: string) => {
     if (!config) return;
-    const next = localMedios.filter(m => m.nombre !== nombre);
+    const next = localMediosRef.current.filter(m => m.nombre !== nombre);
+    localMediosRef.current = next;
     setLocalMedios(next);
     setConfirmDelete(null);
-    saveConfig({ ...config, categorias: localCats, mediosPago: next, origenesAhorro: localOrigenes });
+    saveConfig({ ...config, categorias: localCatsRef.current, mediosPago: next, origenesAhorro: localOrigenesRef.current });
   };
 
   const eliminarOrigenLocal = (nombre: string) => {
     if (!config) return;
-    const next = localOrigenes.filter(o => o.nombre !== nombre);
+    const next = localOrigenesRef.current.filter(o => o.nombre !== nombre);
+    localOrigenesRef.current = next;
     setLocalOrigenes(next);
     setConfirmDelete(null);
-    saveConfig({ ...config, categorias: localCats, mediosPago: localMedios, origenesAhorro: next });
+    saveConfig({ ...config, categorias: localCatsRef.current, mediosPago: localMediosRef.current, origenesAhorro: next });
   };
 
   const agregarMedioLocal = () => {
     if (!nuevoNombre.trim() || !config) return;
-    const next = [...localMedios, { id: nuevoNombre, nombre: nuevoNombre.trim(), activo: true }];
+    const next = [...localMediosRef.current, { id: nuevoNombre, nombre: nuevoNombre.trim(), activo: true }];
+    localMediosRef.current = next;
     setLocalMedios(next);
     setNuevoNombre("");
-    saveConfig({ ...config, categorias: localCats, mediosPago: next, origenesAhorro: localOrigenes });
+    saveConfig({ ...config, categorias: localCatsRef.current, mediosPago: next, origenesAhorro: localOrigenesRef.current });
   };
 
   const agregarOrigenLocal = () => {
     if (!nuevoNombre.trim() || !config) return;
-    const next = [...localOrigenes, { id: nuevoNombre, nombre: nuevoNombre.trim(), activo: true }];
+    const next = [...localOrigenesRef.current, { id: nuevoNombre, nombre: nuevoNombre.trim(), activo: true }];
+    localOrigenesRef.current = next;
     setLocalOrigenes(next);
     setNuevoNombre("");
-    saveConfig({ ...config, categorias: localCats, mediosPago: localMedios, origenesAhorro: next });
+    saveConfig({ ...config, categorias: localCatsRef.current, mediosPago: localMediosRef.current, origenesAhorro: next });
   };
 
   const guardarMovimientos = () => {
@@ -392,28 +415,34 @@ export default function ConfigPage() {
     saveConfig({ ...config, categorias: localCats, mediosPago: localMedios, origenesAhorro: localOrigenes });
   };
 
-  const toggleAutoAhorro = () => {
+  const openAutoAhorroModal = () => {
     if (!config) return;
-    const activo = !(config.meta.autoAhorro?.activo ?? false);
-    const monto = config.meta.autoAhorro?.monto ?? 0;
-    const mediosPago = config.meta.autoAhorro?.mediosPago
-      ?? (activo ? config.mediosPago.filter(m => m.activo).map(m => m.nombre) : []);
-    saveConfig({ ...config, meta: { ...config.meta, autoAhorro: { activo, monto, mediosPago } } });
+    setLocalAutoMonto(config.meta.autoAhorro?.monto?.toString() ?? "");
+    setLocalAutoMedios(
+      config.meta.autoAhorro?.mediosPago ??
+      config.mediosPago.filter(m => m.activo).map(m => m.nombre)
+    );
+    setShowAutoAhorroModal(true);
   };
 
-  const toggleAutoAhorroMedio = (nombre: string) => {
+  const handleToggleAutoAhorro = () => {
     if (!config) return;
-    const current = config.meta.autoAhorro?.mediosPago ?? [];
-    const mediosPago = current.includes(nombre) ? current.filter(m => m !== nombre) : [...current, nombre];
-    saveConfig({ ...config, meta: { ...config.meta, autoAhorro: { activo: config.meta.autoAhorro?.activo ?? true, monto: config.meta.autoAhorro?.monto ?? 0, mediosPago } } });
+    if (config.meta.autoAhorro?.activo) {
+      saveConfig({ ...config, meta: { ...config.meta, autoAhorro: { ...config.meta.autoAhorro, activo: false } } });
+    } else {
+      openAutoAhorroModal();
+    }
   };
 
-  const saveAutoAhorroMonto = () => {
+  const confirmAutoAhorro = () => {
     if (!config) return;
-    const monto = parseFloat(autoAhorroMonto) || 0;
-    if (monto <= 0) return;
-    saveConfig({ ...config, meta: { ...config.meta, autoAhorro: { activo: config.meta.autoAhorro?.activo ?? true, monto, mediosPago: config.meta.autoAhorro?.mediosPago ?? [] } } });
+    const monto = parseFloat(localAutoMonto) || 0;
+    if (monto <= 0 || localAutoMedios.length === 0) return;
+    saveConfig({ ...config, meta: { ...config.meta, autoAhorro: { activo: true, monto, mediosPago: localAutoMedios } } });
+    setShowAutoAhorroModal(false);
   };
+
+  const canConfirmAutoAhorro = parseFloat(localAutoMonto) > 0 && localAutoMedios.length > 0;
 
   // ── Reportes handlers (auto-save) ──
   const toggleLocalReporte = (id: string) => {
@@ -627,7 +656,10 @@ export default function ConfigPage() {
 
             {/* Auto-ahorro */}
             <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, cursor: config.meta.autoAhorro?.activo ? "pointer" : "default" }}
+                onClick={config.meta.autoAhorro?.activo ? openAutoAhorroModal : undefined}
+              >
                 <div style={{
                   width: 36, height: 36, borderRadius: 10,
                   background: config.meta.autoAhorro?.activo ? "var(--green-dim)" : "var(--red-dim)",
@@ -643,50 +675,21 @@ export default function ConfigPage() {
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 500 }}>Auto-ahorro</div>
                   <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                    {config.meta.autoAhorro?.activo && config.meta.autoAhorro.monto > 0
-                      ? `$${config.meta.autoAhorro.monto.toLocaleString("es-AR")} por gasto`
-                      : "Destina un monto fijo por cada gasto"}
+                    {config.meta.autoAhorro?.activo && config.meta.autoAhorro.monto > 0 ? (() => {
+                      const sym = monedaPrincipal === "USD" ? "U$D" : monedaPrincipal === "EUR" ? "€" : "$";
+                      const monto = `${sym}${config.meta.autoAhorro.monto.toLocaleString("es-AR")} por gasto`;
+                      const medios = config.meta.autoAhorro.mediosPago ?? [];
+                      const allActive = config.mediosPago.filter(m => m.activo).map(m => m.nombre);
+                      const mediosStr = medios.length === 0 || medios.length === allActive.length
+                        ? "todos los medios"
+                        : medios.join(" + ");
+                      return `${monto} · ${mediosStr}`;
+                    })() : "Destina un monto fijo por cada gasto"}
                   </div>
                 </div>
               </div>
-              <Toggle activo={config.meta.autoAhorro?.activo ?? false} onClick={toggleAutoAhorro} />
+              <Toggle activo={config.meta.autoAhorro?.activo ?? false} onClick={handleToggleAutoAhorro} />
             </div>
-            {config.meta.autoAhorro?.activo && (
-              <div style={{ padding: "12px 0 4px", borderTop: "1px solid var(--faint)", display: "flex", flexDirection: "column", gap: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                  <div className="label" style={{ margin: 0 }}>
-                    Monto ({monedaPrincipal === "USD" ? "U$D" : monedaPrincipal === "EUR" ? "€" : "$"})
-                  </div>
-                  <input
-                    type="number" value={autoAhorroMonto} placeholder="0"
-                    onChange={e => setAutoAhorroMonto(e.target.value)}
-                    onBlur={saveAutoAhorroMonto}
-                    style={{
-                      width: 110, fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700,
-                      background: "var(--surface-alt)", border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-sm)", padding: "6px 10px",
-                      color: "var(--text)", outline: "none", textAlign: "right",
-                    }}
-                  />
-                </div>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                  <div className="label" style={{ margin: 0, flexShrink: 0, paddingTop: 4 }}>Medios que aplican</div>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end", flex: 1 }}>
-                    {config.mediosPago.filter(m => m.activo).map(m => {
-                      const sel = config.meta.autoAhorro?.mediosPago?.includes(m.nombre) ?? false;
-                      return (
-                        <button key={m.nombre} type="button" onClick={() => toggleAutoAhorroMedio(m.nombre)}
-                          className="pill" style={{
-                            borderColor: sel ? "var(--blue)" : "var(--border)",
-                            background: sel ? "var(--blue-dim)" : "transparent",
-                            color: sel ? "var(--blue)" : "var(--muted)",
-                          }}>{m.nombre}</button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Sincronización */}
@@ -1075,6 +1078,67 @@ export default function ConfigPage() {
         }}>
           {syncMsg.text}
         </div>
+      )}
+
+      {showAutoAhorroModal && mounted && createPortal(
+        <div onClick={() => setShowAutoAhorroModal(false)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480 }}>
+            <div style={{ padding: "12px 16px 0" }}>
+              <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 2, margin: "0 auto 14px" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <span style={{ fontSize: 16, fontWeight: 700 }}>Auto-ahorro</span>
+                <button onClick={() => setShowAutoAhorroModal(false)} style={{ background: "none", border: "none", color: "var(--red)", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: 4 }}>×</button>
+              </div>
+            </div>
+            <div style={{ padding: "0 16px 40px", display: "flex", flexDirection: "column", gap: 20 }}>
+              <div>
+                <div className="label" style={{ marginBottom: 8 }}>Monto por gasto ({monedaPrincipal === "USD" ? "U$D" : monedaPrincipal === "EUR" ? "€" : "$"})</div>
+                <input
+                  type="number" value={localAutoMonto} placeholder="0" className="input"
+                  style={{ fontFamily: "var(--font-mono)", fontSize: 15 }}
+                  onChange={e => setLocalAutoMonto(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div>
+                <div className="label" style={{ marginBottom: 8 }}>Medios que aplican</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {config.mediosPago.filter(m => m.activo).map(m => {
+                    const sel = localAutoMedios.includes(m.nombre);
+                    return (
+                      <button key={m.nombre} type="button"
+                        onClick={() => setLocalAutoMedios(sel ? localAutoMedios.filter(x => x !== m.nombre) : [...localAutoMedios, m.nombre])}
+                        className="pill" style={{
+                          borderColor: sel ? "var(--blue)" : "var(--border)",
+                          background: sel ? "var(--blue-dim)" : "transparent",
+                          color: sel ? "var(--blue)" : "var(--muted)",
+                        }}>{m.nombre}</button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
+                <button onClick={confirmAutoAhorro} disabled={!canConfirmAutoAhorro || guardando} style={{
+                  width: 56, height: 56, borderRadius: "50%",
+                  background: canConfirmAutoAhorro ? "var(--green)" : "transparent",
+                  border: `2px solid ${canConfirmAutoAhorro ? "var(--green)" : "var(--border)"}`,
+                  color: canConfirmAutoAhorro ? "var(--bg)" : "var(--border)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: canConfirmAutoAhorro ? "pointer" : "default",
+                  transition: "background 0.2s, border-color 0.2s, color 0.2s",
+                  boxShadow: canConfirmAutoAhorro ? "0 4px 20px var(--green)55" : "none",
+                  opacity: guardando ? 0.5 : 1,
+                }}>
+                  {guardando
+                    ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="spin"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" strokeDasharray="28 56" /></svg>
+                    : <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {showSyncLog && mounted && createPortal(
