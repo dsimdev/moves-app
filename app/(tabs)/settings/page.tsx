@@ -41,6 +41,35 @@ function Toggle({ activo, onClick }: { activo: boolean; onClick: () => void }) {
   );
 }
 
+function FlagAR({ size = 26 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ borderRadius: "50%", display: "block" }}>
+      <clipPath id="flagAR"><circle cx="12" cy="12" r="12" /></clipPath>
+      <g clipPath="url(#flagAR)">
+        <rect width="24" height="8" fill="#74acdf" />
+        <rect y="8" width="24" height="8" fill="#fff" />
+        <rect y="16" width="24" height="8" fill="#74acdf" />
+        <circle cx="12" cy="12" r="2.2" fill="#f6b40e" stroke="#85340a" strokeWidth="0.3" />
+      </g>
+    </svg>
+  );
+}
+
+function FlagGB({ size = 26 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ borderRadius: "50%", display: "block" }}>
+      <clipPath id="flagGB"><circle cx="12" cy="12" r="12" /></clipPath>
+      <g clipPath="url(#flagGB)">
+        <rect width="24" height="24" fill="#012169" />
+        <path d="M0 0 L24 24 M24 0 L0 24" stroke="#fff" strokeWidth="3.5" />
+        <path d="M0 0 L24 24 M24 0 L0 24" stroke="#c8102e" strokeWidth="2" />
+        <path d="M12 0 V24 M0 12 H24" stroke="#fff" strokeWidth="5.5" />
+        <path d="M12 0 V24 M0 12 H24" stroke="#c8102e" strokeWidth="3" />
+      </g>
+    </svg>
+  );
+}
+
 
 export default function ConfigPage() {
   const { user } = useAuth();
@@ -616,28 +645,6 @@ export default function ConfigPage() {
               <Toggle activo={dark} onClick={toggleTheme} />
             </div>
 
-            {/* Language */}
-            <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--border)" }}>
-              <div style={{ fontSize: 13 }}>{t.language}</div>
-              <div style={{ display: "flex", gap: 6 }}>
-                {(["es", "en"] as const).map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLang(l)}
-                    style={{
-                      padding: "6px 12px", borderRadius: 999, fontSize: 12, fontWeight: 700,
-                      border: `1px solid ${lang === l ? "var(--accent)" : "var(--border)"}`,
-                      background: lang === l ? "var(--accent-dim)" : "transparent",
-                      color: lang === l ? "var(--accent)" : "var(--muted)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {l === "es" ? "🇦🇷 ES" : "🇬🇧 EN"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Moneda principal */}
             <div style={{ padding: "12px 0", borderTop: "1px solid var(--faint)", display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{
@@ -809,6 +816,29 @@ export default function ConfigPage() {
                   <div style={{ fontSize: 13 }}>{t.user}</div>
                   <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{user?.email}</div>
                 </div>
+              </div>
+            </div>
+
+            {/* Language */}
+            <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
+              <div style={{ fontSize: 13 }}>{t.language}</div>
+              <div style={{ display: "flex", gap: 12 }}>
+                {(["es", "en"] as const).map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => setLang(l)}
+                    aria-label={l === "es" ? "Español" : "English"}
+                    style={{
+                      background: "transparent", border: "none", cursor: "pointer", padding: 0,
+                      opacity: lang === l ? 1 : 0.35,
+                      filter: lang === l ? "none" : "grayscale(0.7)",
+                      transform: lang === l ? "scale(1.12)" : "scale(1)",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {l === "es" ? <FlagAR /> : <FlagGB />}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
