@@ -4,6 +4,29 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.15.0] — 2026-06-11
+
+### Added
+- **Multilingual support (Spanish / English)** — the entire UI can now be switched between Spanish and English
+  - New language selector in Settings → Account: tap the Argentine 🇦🇷 or British 🇬🇧 flag to switch instantly; the active flag is highlighted and the choice persists across sessions (localStorage)
+  - Flags are rendered as crisp inline SVG icons (no emoji), so they display consistently on every OS including Windows
+- New i18n architecture: `locales/es.ts` + `locales/en.ts` hold every UI string, surfaced through a lightweight `useT()` hook — no extra dependencies
+
+### Changed
+- Every screen (Dashboard, Movements, Investments, Reports, Settings) and the update banner now pull their labels, headings, buttons, placeholders and error messages from the active locale
+- Movement type labels are translated for display (Gasto → Expense, Ingreso → Income, Move → Transfer, etc.) while the values stored in Firestore stay unchanged
+- Report day-of-week names and CSV export headers follow the selected language
+
+### Fixed
+- Update banner now actually triggers: the version check runs immediately on mount (instead of waiting 60s) and re-runs whenever the app returns to the foreground — essential for the installed PWA
+- `/api/version` now sends `no-store` cache headers so neither Vercel's edge nor the browser serve a stale version
+
+### Notes
+- User-created data (categories, payment methods, savings origins) and stored values are never translated — only the app's own UI text
+- Number and date formatting remain in Argentine locale (`es-AR`) regardless of language
+
+---
+
 ## [1.14.6] — 2026-06-10
 
 ### Added
