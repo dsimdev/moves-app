@@ -66,6 +66,7 @@ export interface KpisPeriodo {
   cantGastos: number;
   cantIngresos: number;
   promedioDiario: number;
+  diasConGasto: number;
 }
 
 export function kpisPeriodo(p: PeriodoResumen): KpisPeriodo {
@@ -94,6 +95,7 @@ export function kpisPeriodo(p: PeriodoResumen): KpisPeriodo {
     cantGastos,
     cantIngresos,
     promedioDiario: diasConGasto > 0 ? p.gastado / diasConGasto : 0,
+    diasConGasto,
   };
 }
 

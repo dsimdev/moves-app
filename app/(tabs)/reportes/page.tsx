@@ -157,10 +157,19 @@ export default function ReportesPage() {
 
   // ── Estadísticas avanzadas (Gastos) ──
   const promPorMov = periodo && kpis && kpis.cantGastos > 0 ? periodo.gastado / kpis.cantGastos : null;
-  const diasLibres = activos.length === 1 && periodo ? (() => {
-    const start = parsePeriodoId(activos[0]!);
-    const end = finPeriodo ?? new Date();
-    return diasSinGastos(periodo.movimientos, start, end);
+  const diasLibres = periodo ? (() => {
+    if (activos.length === 1) {
+      const start = parsePeriodoId(activos[0]!);
+      const end = finPeriodo ?? new Date();
+      return diasSinGastos(periodo.movimientos, start, end);
+    }
+    const agg = periodosActivos.map((p, i) => {
+      const start = parsePeriodoId(p.periodoId);
+      const idxInAll = periodos.findIndex((x) => x.periodoId === p.periodoId);
+      const end = idxInAll > 0 ? parsePeriodoId(periodos[idxInAll - 1].periodoId) : new Date();
+      return diasSinGastos(p.movimientos, start, end);
+    });
+    return { sinGasto: agg.reduce((s, d) => s + d.sinGasto, 0), total: agg.reduce((s, d) => s + d.total, 0) };
   })() : null;
   const catMasCrecio = comp.filter((c) => c.deltaPct !== null && c.deltaPct > 0).sort((a, b) => (b.deltaPct ?? 0) - (a.deltaPct ?? 0))[0] ?? null;
 
@@ -506,7 +515,7 @@ export default function ReportesPage() {
               {reportOn("gastos_kpis") && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                 <Stat label="Gastado" value={money(periodo.gastado)} sub={`${periodo.pct}% del total`} color={colorPct(periodo.pct)} danger={periodo.pct > 100} dimVar={periodo.pct > 90 ? "var(--red-dim)" : periodo.pct > 50 ? "var(--yellow-dim)" : "var(--green-dim)"} />
-                {ritmo && <Stat label="Promedio / día" value={money(kpis.promedioDiario)} sub={`${ritmo.diasTranscurridos} días`} color="var(--red)" dimVar="var(--red-dim)" />}
+                {ritmo && <Stat label="Promedio / día con gasto" value={money(kpis.promedioDiario)} sub={`${kpis.diasConGasto} días con gastos`} color="var(--red)" dimVar="var(--red-dim)" />}
                 {activos.length > 1 && (() => {
                   const oldest = periodosActivos[periodosActivos.length - 1];
                   const newest = periodosActivos[0];
@@ -695,7 +704,7 @@ export default function ReportesPage() {
                       <div style={{ display: "flex", gap: 4 }}>
                         {[3, 6, 12].map((n) => (
                           <button key={n} onClick={() => setProyPeriodos(n)} style={{
-                            padding: "3px 8px", borderRadius: 999, fontSize: 9, fontWeight: 700, cursor: "pointer",
+                            padding: "4px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700, cursor: "pointer",
                             border: `1px solid ${proyPeriodos === n ? "var(--blue)" : "var(--border)"}`,
                             background: proyPeriodos === n ? "var(--blue-dim)" : "transparent",
                             color: proyPeriodos === n ? "var(--blue)" : "var(--muted)",
@@ -706,7 +715,6 @@ export default function ReportesPage() {
                     <div style={{ fontSize: 19, fontWeight: 700, color: "var(--blue)", fontFamily: "var(--font-mono)", lineHeight: 1.05 }}>
                       {money(proyectarAhorros(serie, proyPeriodos))}
                     </div>
-                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 6 }}>en {proyPeriodos} períodos · desde {money(serie[serie.length - 1]!.ahorrosAcum)}</div>
                   </div>
                 )}
               </div>

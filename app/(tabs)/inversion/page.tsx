@@ -209,30 +209,32 @@ export default function DolaresPage() {
                 <div className="label" style={{ marginBottom: 0 }}>Meta de ahorro</div>
                 {config.meta.metaFecha && <div style={{ fontSize: 9, color: "var(--muted)" }}>{fechaCortaConAnio(config.meta.metaFecha)}</div>}
               </div>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>Objetivo {monedaInversiones}</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                  {simbolo} {config.meta.metaMonto.toLocaleString("es-AR")}
-                </div>
-              </div>
               {(() => {
                 const falta = Math.max(0, config.meta.metaMonto - totalDisplay);
                 const pctMeta = Math.min((totalDisplay / config.meta.metaMonto) * 100, 100);
                 const metaAlcanzada = falta <= 0;
+                const barColor = pctMeta >= 80 ? "var(--green)" : pctMeta >= 40 ? "var(--yellow)" : "var(--red)";
                 return (
                   <>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderTop: "1px solid var(--faint)", marginBottom: 8 }}>
-                      <span style={{ fontSize: 11, color: "var(--muted)" }}>Ahorrado</span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>{simbolo} {oculto ? "••" : totalDisplay.toFixed(2)}</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>Objetivo {monedaInversiones}</div>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
+                          {simbolo} {config.meta.metaMonto.toLocaleString("es-AR")}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>Faltan</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: metaAlcanzada ? "var(--green)" : "var(--yellow)", fontFamily: "var(--font-mono)" }}>
+                          {simbolo} {oculto ? "••" : (metaAlcanzada ? "0.00" : falta.toFixed(2))}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", marginBottom: 12 }}>
-                      <span style={{ fontSize: 11, color: "var(--muted)" }}>Falta</span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: metaAlcanzada ? "var(--green)" : "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                        {simbolo} {oculto ? "••" : (metaAlcanzada ? "0.00" : falta.toFixed(2))}
-                      </span>
-                    </div>
-                    <div className="progress-track">
-                      <div className="progress-fill" style={{ width: `${pctMeta}%`, background: metaAlcanzada ? "var(--green)" : "var(--yellow)" }} />
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div className="progress-track" style={{ flex: 1, margin: 0 }}>
+                        <div className="progress-fill" style={{ width: `${pctMeta}%`, background: barColor }} />
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: barColor, fontFamily: "var(--font-mono)", minWidth: 36, textAlign: "right" }}>{pctMeta.toFixed(1)}%</span>
                     </div>
                   </>
                 );
@@ -283,6 +285,7 @@ export default function DolaresPage() {
                   <div style={{ fontSize: 18, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
                     {periodosParaMeta === 0 ? "¡Alcanzada!" : `${periodosParaMeta}p`}
                   </div>
+                  <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>al ritmo de los últimos 3 períodos</div>
                 </div>
               )}
             </div>

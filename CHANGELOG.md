@@ -4,6 +4,19 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.14.4] — 2026-06-10
+
+### Changed
+- Settings > App: CSV export button label changed to "Backup"; confirm button uses blue (consistent with GitHub modal)
+- Settings > App card restructured: logo → versión + changelog → GitHub → Backup, all with icon + label
+- Investment > Meta de ahorro: "Ahorrado" row removed; "Faltan" moved next to "Objetivo" header; progress bar color is red <40% / yellow <80% / green ≥80%; percentage shown inline with the bar
+- Investment > Períodos para alcanzar meta: subtitle "al ritmo de los últimos 3 períodos" added
+- Reports > Gastos: "Promedio / día" renamed to "Promedio / día con gasto"; subtitle corrected to show days with actual expenses (not calendar days)
+- Reports > Gastos: "Días sin gastos" now visible when multiple periods are selected (aggregates across all selected periods)
+- Reports > Ingresos: Proyección ahorros subtitle removed; period selector (3p/6p/12p) restored to pill style
+
+---
+
 ## [1.14.3] — 2026-06-10
 
 ### Changed
