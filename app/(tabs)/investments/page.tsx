@@ -204,94 +204,69 @@ export default function DolaresPage() {
 
           </>)}
 
-          {/* Meta de ahorro */}
-          {config?.meta.metaMonto && (
-            <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <div className="label" style={{ marginBottom: 0 }}>{t.savingsGoal}</div>
-                {config.meta.metaFecha && <div style={{ fontSize: 9, color: "var(--muted)" }}>{fechaCortaConAnio(config.meta.metaFecha)}</div>}
-              </div>
-              {(() => {
-                const falta = Math.max(0, config.meta.metaMonto - totalDisplay);
-                const pctMeta = Math.min((totalDisplay / config.meta.metaMonto) * 100, 100);
-                const metaAlcanzada = falta <= 0;
-                const barColor = pctMeta >= 80 ? "var(--green)" : pctMeta >= 40 ? "var(--yellow)" : "var(--red)";
-                return (
-                  <>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14 }}>
-                      <div>
-                        <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>{t.goal} {monedaInversiones}</div>
-                        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                          {simbolo} {config.meta.metaMonto.toLocaleString("es-AR")}
-                        </div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>{t.remainingLabel}</div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: metaAlcanzada ? "var(--green)" : "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                          {simbolo} {oculto ? "••" : (metaAlcanzada ? "0.00" : falta.toFixed(2))}
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div className="progress-track" style={{ flex: 1, margin: 0 }}>
-                        <div className="progress-fill" style={{ width: `${pctMeta}%`, background: barColor }} />
-                      </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: barColor, fontFamily: "var(--font-mono)", minWidth: 36, textAlign: "right" }}>{pctMeta.toFixed(1)}%</span>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          )}
-
-          {/* Meta por período */}
-          {config?.meta.metaMonto && (
-          <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <div>
-                <div className="label" style={{ marginBottom: 4 }}>{t.goalPerPeriod}</div>
-                <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--yellow)" }}>
-                  {simbolo} {oculto ? "••" : totalDisplay.toFixed(0)} <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 400, fontFamily: "var(--font)" }}>/ {metaUSD}</span>
+          {/* Meta — consolidada */}
+          {config?.meta.metaMonto && (() => {
+            const falta = Math.max(0, config.meta.metaMonto - totalDisplay);
+            const pctMeta = Math.min((totalDisplay / config.meta.metaMonto) * 100, 100);
+            const metaAlcanzada = falta <= 0;
+            const barColor = pctMeta >= 80 ? "var(--green)" : pctMeta >= 40 ? "var(--yellow)" : "var(--red)";
+            return (
+              <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div className="label" style={{ marginBottom: 0 }}>{t.savingsGoal}</div>
+                  {config.meta.metaFecha && <div style={{ fontSize: 9, color: "var(--muted)" }}>{fechaCortaConAnio(config.meta.metaFecha)}</div>}
                 </div>
-              </div>
-              <span className="badge" style={{
-                background: totalDisplay >= metaUSD ? "var(--green-dim)" : "var(--yellow-dim)",
-                color: totalDisplay >= metaUSD ? "var(--green)" : "var(--yellow)",
-                border: `1px solid ${totalDisplay >= metaUSD ? "var(--green)" : "var(--yellow)"}44`,
-              }}>
-                {totalDisplay >= metaUSD ? t.reachedBadge : `${((totalDisplay / metaUSD) * 100).toFixed(0)}%`}
-              </span>
-            </div>
-            <div className="progress-track">
-              <div className="progress-fill" style={{
-                width: `${Math.min((totalDisplay / metaUSD) * 100, 100)}%`,
-                background: totalDisplay >= metaUSD ? "var(--green)" : "var(--yellow)",
-              }} />
-            </div>
-          </div>
-          )}
 
-          {/* Tendencias inversión */}
-          {(proyUSD !== null || periodosParaMeta !== null) && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-              {proyUSD !== null && cotizOficial && (
-                <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", textAlign: "center" }}>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>{t.projection3periods}</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>{simbolo} {oculto ? "••••" : proyUSD.toFixed(0)}</div>
-                  <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>{t.atOfficial} ${cotizOficial.toLocaleString("es-AR")}</div>
-                </div>
-              )}
-              {periodosParaMeta !== null && (
-                <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", textAlign: "center" }}>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>{t.periodsToGoal}</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                    {periodosParaMeta === 0 ? t.reached : `${periodosParaMeta}`}
+                {/* Objetivo + faltan */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>{t.goal} {monedaInversiones}</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)", lineHeight: 1 }}>
+                      {simbolo} {config.meta.metaMonto.toLocaleString("es-AR")}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>{t.paceOfLast3}</div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>{t.remainingLabel}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: metaAlcanzada ? "var(--green)" : "var(--yellow)", fontFamily: "var(--font-mono)" }}>
+                      {oculto ? "••" : (metaAlcanzada ? "0" : Math.round(falta).toLocaleString("es-AR"))}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
+
+                {/* Barra */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div className="progress-track" style={{ flex: 1, margin: 0 }}>
+                    <div className="progress-fill" style={{ width: `${pctMeta}%`, background: barColor }} />
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: barColor, fontFamily: "var(--font-mono)", minWidth: 36, textAlign: "right" }}>{pctMeta.toFixed(1)}%</span>
+                </div>
+
+                {/* Mini-stats inline */}
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+                  <div>
+                    <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 1, marginBottom: 4 }}>{t.statPerPeriod}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
+                      {oculto ? "••" : totalDisplay.toFixed(0)}<span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 400 }}>/{metaUSD}</span>
+                    </div>
+                  </div>
+                  {proyUSD !== null && (
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 1, marginBottom: 4 }}>{t.statProjection}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>{oculto ? "••••" : proyUSD.toFixed(0)}</div>
+                    </div>
+                  )}
+                  {periodosParaMeta !== null && (
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 1, marginBottom: 4 }}>{t.statToGoal}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
+                        {periodosParaMeta === 0 ? t.reached : `${periodosParaMeta} ${t.periodsShort}`}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Historial USD */}
           {showUSD && historialUSD.length > 0 && (
@@ -305,7 +280,7 @@ export default function DolaresPage() {
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                      +{oculto ? "••" : m.cantidadUSD?.toFixed(2)} USD
+                      +{oculto ? "••" : m.cantidadUSD?.toFixed(2)}
                     </div>
                     <div style={{ fontSize: 10, color: "var(--muted)" }}>{money(m.monto)}</div>
                   </div>
@@ -326,7 +301,7 @@ export default function DolaresPage() {
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                      +{oculto ? "••" : m.cantidadUSD?.toFixed(2)} EUR
+                      +{oculto ? "••" : m.cantidadUSD?.toFixed(2)}
                     </div>
                     <div style={{ fontSize: 10, color: "var(--muted)" }}>{money(m.monto)}</div>
                   </div>

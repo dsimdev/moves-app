@@ -88,6 +88,10 @@ export const es = {
   paceOfLast3: "al ritmo de los últimos 3",
   usdHistory: "Historial compras USD",
   eurHistory: "Historial compras EUR",
+  statPerPeriod: "Por período",
+  statProjection: "Proyección",
+  statToGoal: "Para la meta",
+  periodsShort: "per.",
 
   // Reports
   analysis: "Análisis",

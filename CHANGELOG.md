@@ -4,6 +4,16 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.20.0] — 2026-06-11
+
+### Changed
+- **Investments page redesigned** — from 6 stacked cards down to 3 blocks: Reserve (hero) · Goal (consolidated) · History
+- The four goal-related cards (savings goal, goal per period, projection, periods-to-goal) merged into a single **Goal** card: objective + progress bar on top, a row of inline mini-stats (Per period · Projection · To goal) below
+- Currency symbol no longer repeated on every number — kept only on the Reserve headline and the goal objective; remaining figures are clean (remaining, per period, projection, history)
+- Purchase history rows no longer append "USD"/"EUR" to each amount
+
+---
+
 ## [1.19.0] — 2026-06-11
 
 ### Changed

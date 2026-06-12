@@ -90,6 +90,10 @@ export const en: AppLocale = {
   paceOfLast3: "at the pace of the last 3",
   usdHistory: "USD purchase history",
   eurHistory: "EUR purchase history",
+  statPerPeriod: "Per period",
+  statProjection: "Projection",
+  statToGoal: "To goal",
+  periodsShort: "per.",
 
   // Reports
   analysis: "Analysis",

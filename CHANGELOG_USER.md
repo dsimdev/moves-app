@@ -4,6 +4,16 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [1.20.0] — 2026-06-11
+
+### Novedades
+- **Sección Inversión renovada**: más limpia y compacta. Pasó de muchas tarjetas a 3 bloques (Reserva, Meta e Historial), con toda la info de la meta en un solo lugar.
+
+### Mejoras
+- Sacamos el "U$D" repetido en cada número: el símbolo queda solo donde hace falta y se lee más fácil.
+
+---
+
 ## [1.19.0] — 2026-06-11
 
 ### Novedades
