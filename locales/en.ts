@@ -271,4 +271,15 @@ export const en: AppLocale = {
   notFoundTitle: "Page not found",
   notFoundBody: "The page you're looking for doesn't exist or was moved.",
   notFoundHome: "Back home",
+
+  // Biometrics
+  biometricUnlock: "Fingerprint unlock",
+  biometricUnlockSub: "Ask for your fingerprint when opening the app",
+  biometricNotAvailable: "Your device has no fingerprint reader",
+  biometricEnableError: "Could not enable fingerprint unlock",
+  lockTitle: "App locked",
+  lockSubtitle: "Verify your identity to continue",
+  unlockWithFingerprint: "Unlock with fingerprint",
+  unlockFailed: "Could not verify. Try again.",
+  usePassword: "Use password",
 };

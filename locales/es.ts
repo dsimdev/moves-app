@@ -269,6 +269,17 @@ export const es = {
   notFoundTitle: "Página no encontrada",
   notFoundBody: "La página que buscás no existe o fue movida.",
   notFoundHome: "Volver al inicio",
+
+  // Biometría
+  biometricUnlock: "Desbloqueo con huella",
+  biometricUnlockSub: "Pedir tu huella al abrir la app",
+  biometricNotAvailable: "Tu dispositivo no tiene lector de huella",
+  biometricEnableError: "No se pudo activar el desbloqueo con huella",
+  lockTitle: "App bloqueada",
+  lockSubtitle: "Verificá tu identidad para continuar",
+  unlockWithFingerprint: "Desbloquear con huella",
+  unlockFailed: "No se pudo verificar. Intentá de nuevo.",
+  usePassword: "Usar contraseña",
 };
 
 export type AppLocale = typeof es;

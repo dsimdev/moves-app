@@ -4,6 +4,21 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.18.0] — 2026-06-11
+
+### Added
+- **Fingerprint unlock (opt-in)** — enable it in Settings → Account. When on, the app opens to a lock screen that asks for your fingerprint before revealing your data:
+  - Uses the device platform authenticator via WebAuthn (`userVerification: required`)
+  - Acts as a local UI gate over your active Firebase session — if the fingerprint fails or is cancelled, you can fall back to password (sign out → login)
+  - The toggle only appears on devices that have a biometric sensor
+
+### Notes
+- Fully opt-in and backward-compatible: if you don't enable it, nothing changes
+- Only works over HTTPS (production); test it on your phone after deploy
+- The device decides which biometric method it presents (fingerprint on Android); the API can't force a specific one
+
+---
+
 ## [1.17.0] — 2026-06-11
 
 ### Added

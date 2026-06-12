@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import type { ConfigUsuario } from "@/types";
 import { formatTimestampAR, isoToFechaAR, sanitizeCell } from "@/lib/sheet-format";
 import { dbErrorMessage } from "@/lib/firebase-error";
+import { platformAuthenticatorAvailable, isBiometricEnabledFor, registerBiometric, clearBiometric } from "@/lib/biometric";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useTheme } from "@/hooks/useTheme";
 import { useAppPrefs } from "@/hooks/useAppPrefs";
@@ -117,6 +118,30 @@ export default function ConfigPage() {
   const [syncMsg, setSyncMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  // Biometría
+  const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioEnabled, setBioEnabled] = useState(false);
+  const [bioError, setBioError] = useState("");
+  useEffect(() => {
+    platformAuthenticatorAvailable().then(setBioAvailable);
+    setBioEnabled(isBiometricEnabledFor(user?.uid));
+  }, [user?.uid]);
+  const toggleBiometric = async () => {
+    setBioError("");
+    if (bioEnabled) {
+      clearBiometric();
+      setBioEnabled(false);
+      return;
+    }
+    if (!user?.uid || !user.email) return;
+    try {
+      await registerBiometric(user.uid, user.email);
+      setBioEnabled(true);
+    } catch {
+      setBioError(t.biometricEnableError);
+      setTimeout(() => setBioError(""), 3000);
+    }
+  };
   const [changelog, setChangelog] = useState<string | null>(null);
   const [showChangelog, setShowChangelog] = useState(false);
   const [showSyncLog, setShowSyncLog] = useState(false);
@@ -842,6 +867,33 @@ export default function ConfigPage() {
                 ))}
               </div>
             </div>
+
+            {/* Desbloqueo con huella */}
+            {bioAvailable && (
+              <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    background: "var(--surface-alt)", border: "1px solid var(--border)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 11c0 3 0 6-1 8.5" />
+                      <path d="M8 11a4 4 0 0 1 8 0c0 3.5-.5 6-1.5 8" />
+                      <path d="M5 11a7 7 0 0 1 14 0c0 1.5 0 3-.3 4.5" />
+                      <path d="M3 9a9 9 0 0 1 4-3.5M21 9a9 9 0 0 0-4-3.5" />
+                    </svg>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13 }}>{t.biometricUnlock}</div>
+                    <div style={{ fontSize: 11, color: bioError ? "var(--red)" : "var(--muted)", marginTop: 2 }}>
+                      {bioError || t.biometricUnlockSub}
+                    </div>
+                  </div>
+                </div>
+                <Toggle activo={bioEnabled} onClick={toggleBiometric} />
+              </div>
+            )}
           </div>
 
           <div className="card">
