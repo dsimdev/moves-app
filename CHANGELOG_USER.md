@@ -4,6 +4,13 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [1.21.0] — 2026-06-12
+
+### Novedades
+- **Notificaciones al celular**: activalas en Configuración → Cuenta. Te avisan cuando falla la sincronización, cuando hay una versión nueva, y cuando el dólar oficial se mueve fuerte (3% o más).
+
+---
+
 ## [1.20.0] — 2026-06-11
 
 ### Novedades

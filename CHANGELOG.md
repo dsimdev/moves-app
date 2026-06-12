@@ -4,6 +4,23 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.21.0] — 2026-06-12
+
+### Added
+- **Push notifications** — opt-in toggle in Settings → Account (shown only on supported devices). Subscribes via Web Push (VAPID), stores the subscription in Firestore (`users/{uid}/config/push`), and the service worker renders the notification + handles clicks
+- Three server-side triggers wired into the existing daily cron (no extra cron needed):
+  1. **Sync failure** — notifies when the daily Google Sheets sync fails
+  2. **New version** — notifies once when the deployed build version changes
+  3. **Dollar move** — notifies when the official USD rate moves ≥3% vs. the previous day
+- `lib/web-push.ts` (server send helper; auto-removes expired subscriptions on 404/410) and `lib/push-client.ts` (permission + subscribe/unsubscribe)
+
+### Notes
+- Requires `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` env vars in Vercel
+- Works on the installed PWA (Android; iOS 16.4+ installed to home screen)
+- Triggers evaluate once per day with the cron; version/dollar checks compare against the previous run, so the first run only seeds the baseline
+
+---
+
 ## [1.20.0] — 2026-06-11
 
 ### Changed

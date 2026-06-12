@@ -283,6 +283,10 @@ export const es = {
   notFoundHome: "Volver al inicio",
 
   // Biometría
+  notifications: "Notificaciones",
+  notificationsSub: "Avisos de sync, nueva versión y dólar",
+  notificationsDenied: "Permiso de notificaciones bloqueado",
+  notificationsError: "No se pudieron activar las notificaciones",
   biometricUnlock: "Desbloqueo con huella",
   biometricUnlockSub: "Pedir tu huella al abrir la app",
   biometricNotAvailable: "Tu dispositivo no tiene lector de huella",

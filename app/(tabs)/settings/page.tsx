@@ -16,6 +16,7 @@ import type { ConfigUsuario } from "@/types";
 import { formatTimestampAR, isoToFechaAR, sanitizeCell } from "@/lib/sheet-format";
 import { dbErrorMessage } from "@/lib/firebase-error";
 import { platformAuthenticatorAvailable, isBiometricEnabledFor, registerBiometric, clearBiometric } from "@/lib/biometric";
+import { pushSupported, isPushEnabled, enablePush, disablePush } from "@/lib/push-client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useTheme } from "@/hooks/useTheme";
 import { useAppPrefs } from "@/hooks/useAppPrefs";
@@ -208,6 +209,36 @@ export default function ConfigPage() {
     } catch {
       setBioError(t.biometricEnableError);
       setTimeout(() => setBioError(""), 3000);
+    }
+  };
+  // Notificaciones push
+  const [pushAvailable, setPushAvailable] = useState(false);
+  const [pushOn, setPushOn] = useState(false);
+  const [pushError, setPushError] = useState("");
+  const [pushBusy, setPushBusy] = useState(false);
+  useEffect(() => {
+    const ok = pushSupported();
+    setPushAvailable(ok);
+    if (ok) isPushEnabled().then(setPushOn);
+  }, []);
+  const togglePush = async () => {
+    if (pushBusy || !user?.uid) return;
+    setPushError("");
+    setPushBusy(true);
+    try {
+      if (pushOn) {
+        await disablePush(user.uid);
+        setPushOn(false);
+      } else {
+        const ok = await enablePush(user.uid);
+        if (ok) setPushOn(true);
+        else { setPushError(t.notificationsDenied); setTimeout(() => setPushError(""), 3000); }
+      }
+    } catch {
+      setPushError(t.notificationsError);
+      setTimeout(() => setPushError(""), 3000);
+    } finally {
+      setPushBusy(false);
     }
   };
   const [changelog, setChangelog] = useState<string | null>(null);
@@ -728,6 +759,25 @@ export default function ConfigPage() {
                   </div>
                 </div>
                 <Toggle activo={bioEnabled} onClick={toggleBiometric} />
+              </div>
+            )}
+
+            {/* Notificaciones */}
+            {pushAvailable && (
+              <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--surface-alt)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13 }}>{t.notifications}</div>
+                    <div style={{ fontSize: 11, color: pushError ? "var(--red)" : "var(--muted)", marginTop: 2 }}>{pushError || t.notificationsSub}</div>
+                  </div>
+                </div>
+                <Toggle activo={pushOn} onClick={togglePush} />
               </div>
             )}
 

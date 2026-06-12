@@ -285,6 +285,10 @@ export const en: AppLocale = {
   notFoundHome: "Back home",
 
   // Biometrics
+  notifications: "Notifications",
+  notificationsSub: "Sync, new version and dollar alerts",
+  notificationsDenied: "Notification permission is blocked",
+  notificationsError: "Could not enable notifications",
   biometricUnlock: "Fingerprint unlock",
   biometricUnlockSub: "Ask for your fingerprint when opening the app",
   biometricNotAvailable: "Your device has no fingerprint reader",
