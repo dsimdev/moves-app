@@ -186,12 +186,15 @@ export const en: AppLocale = {
   user: "User",
   exportCSV: "Export CSV",
   signOut: "Sign out",
+  signOutTitle: "Sign out?",
+  signOutBody: "You'll be signed out of your account on this device.",
   categories: "Categories",
   methods: "Methods",
   originsLabel: "Origins",
   paymentMethods: "Payment methods",
   savingsOrigins: "Savings origins",
   shownWhenAddingIncomeSavings: "Shown when adding Income → Savings",
+  chipHint: "Tap to toggle · Long-press to delete",
   newCategory: "New category",
   newMethod: "New method",
   newOrigin: "New origin",
@@ -201,7 +204,7 @@ export const en: AppLocale = {
   savingsGoalSettings: "Savings goal",
   currentReserve: (s: string, v: string) => `Current reserve: ${s} ${v}`,
   targetDate: "Target date",
-  targetAmount: (m: string) => `Target amount (${m})`,
+  targetAmount: (m: string) => `Target (${m})`,
   estimatedPerPeriod: "Estimated per period",
   syncHistory: "Sync history",
   noRecords: "No records",
@@ -260,6 +263,11 @@ export const en: AppLocale = {
 
   // Offline
   offline: "No connection",
+
+  // Language change
+  changeLanguageTitle: "Change language?",
+  changeLanguageBody: "The app will reload to apply the change.",
+  changeLanguageConfirm: "Change and reload",
 
   // Error boundary
   errorTitle: "Something went wrong",

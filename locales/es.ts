@@ -184,12 +184,15 @@ export const es = {
   user: "Usuario",
   exportCSV: "Exportar CSV",
   signOut: "Cerrar sesión",
+  signOutTitle: "¿Cerrar sesión?",
+  signOutBody: "Vas a salir de tu cuenta en este dispositivo.",
   categories: "Categorías",
   methods: "Medios",
   originsLabel: "Orígenes",
   paymentMethods: "Medios de pago",
   savingsOrigins: "Orígenes de ahorro",
   shownWhenAddingIncomeSavings: "Aparecen al cargar Ingreso → Ahorros",
+  chipHint: "Tocá para activar/desactivar · Mantené presionado para eliminar",
   newCategory: "Nueva categoría",
   newMethod: "Nuevo medio",
   newOrigin: "Nuevo origen",
@@ -199,7 +202,7 @@ export const es = {
   savingsGoalSettings: "Meta de ahorro",
   currentReserve: (s: string, v: string) => `Reserva actual: ${s} ${v}`,
   targetDate: "Fecha objetivo",
-  targetAmount: (m: string) => `Monto objetivo (${m})`,
+  targetAmount: (m: string) => `Objetivo (${m})`,
   estimatedPerPeriod: "Por período estimado",
   syncHistory: "Historial de sync",
   noRecords: "Sin registros",
@@ -258,6 +261,11 @@ export const es = {
 
   // Offline
   offline: "Sin conexión",
+
+  // Cambio de idioma
+  changeLanguageTitle: "¿Cambiar idioma?",
+  changeLanguageBody: "La app se recargará para aplicar el cambio.",
+  changeLanguageConfirm: "Cambiar y recargar",
 
   // Error boundary
   errorTitle: "Algo salió mal",

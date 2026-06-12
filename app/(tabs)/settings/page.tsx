@@ -21,8 +21,6 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAppPrefs } from "@/hooks/useAppPrefs";
 import { useT } from "@/hooks/useTranslation";
 
-type Tab = "cuenta" | "movimientos" | "reportes" | "ahorros";
-
 function Toggle({ activo, onClick }: { activo: boolean; onClick: () => void }) {
   return (
     <div onClick={onClick} style={{
@@ -73,6 +71,79 @@ function FlagGB({ size = 26 }: { size?: number }) {
 }
 
 
+function Chip({ label, colorVar, dimVar, activo, confirming, onToggle, onLongPress, onConfirmDelete }: {
+  label: string; colorVar: string; dimVar: string; activo: boolean; confirming: boolean;
+  onToggle: () => void; onLongPress: () => void; onConfirmDelete: () => void;
+}) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressed = useRef(false);
+
+  const start = () => {
+    longPressed.current = false;
+    timer.current = setTimeout(() => { longPressed.current = true; onLongPress(); }, 450);
+  };
+  const end = () => { if (timer.current) clearTimeout(timer.current); };
+
+  const handleClick = () => {
+    if (longPressed.current) { longPressed.current = false; return; }
+    if (confirming) onConfirmDelete();
+    else onToggle();
+  };
+
+  if (confirming) {
+    return (
+      <button onClick={onConfirmDelete} style={{
+        display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 999,
+        background: "var(--red-dim)", border: "1px solid var(--red)", color: "var(--red)",
+        fontSize: 12.5, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap",
+      }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/>
+        </svg>
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      onPointerDown={start}
+      onPointerUp={end}
+      onPointerLeave={end}
+      onPointerCancel={end}
+      style={{
+        padding: "7px 14px", borderRadius: 999, fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+        whiteSpace: "nowrap", transition: "all 0.15s", touchAction: "manipulation",
+        border: `1px solid ${activo ? colorVar : "var(--border)"}`,
+        background: activo ? dimVar : "transparent",
+        color: activo ? colorVar : "var(--muted)",
+        opacity: activo ? 1 : 0.55,
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function SectionHeader({ title, open, onClick, danger }: { title: string; open: boolean; onClick: () => void; danger?: boolean }) {
+  return (
+    <button onClick={onClick} style={{
+      width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+      background: "none", border: "none", cursor: "pointer", padding: 0,
+    }}>
+      <span className="label" style={{ margin: 0, color: danger ? "var(--red)" : undefined }}>{title}</span>
+      <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {danger && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--red)" }} />}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }}>
+          <polyline points="6 9 12 15 18 9" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+    </button>
+  );
+}
+
 export default function ConfigPage() {
   const { user } = useAuth();
   const { config, loading, refresh } = useConfig(user?.uid);
@@ -84,13 +155,6 @@ export default function ConfigPage() {
   const { showReportes, showAhorros, monedaInversiones, monedaPrincipal, set: setPref, setMoneda, setMonedaPrincipal, lang, setLang } = useAppPrefs();
   const t = useT();
 
-  const ALL_TABS: { id: Tab; label: string }[] = [
-    { id: "cuenta",      label: "General" },
-    { id: "movimientos", label: t.settingsTabMovements },
-    { id: "ahorros",     label: t.settingsTabInvestments },
-    { id: "reportes",    label: t.settingsTabReports },
-  ];
-
   const SECCION_LABEL: Record<string, string> = {
     gastos: t.sectionExpenses,
     ingresos: t.sectionIncome,
@@ -98,26 +162,30 @@ export default function ConfigPage() {
     periodos: t.sectionPeriods,
   };
 
-  const TABS = ALL_TABS.filter((tab) => {
-    if (tab.id === "reportes" && !showReportes) return false;
-    if (tab.id === "ahorros" && !showAhorros) return false;
-    return true;
-  });
-  const [tab, setTab] = useState<Tab>("cuenta");
-  useEffect(() => {
-    if (!showReportes && tab === "reportes") setTab("cuenta");
-  }, [showReportes, tab]);
   const [guardando, setGuardando] = useState(false);
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoTipo, setNuevoTipo] = useState<"Gasto" | "Ingreso">("Gasto");
   const [movSub, setMovSub] = useState<"categorias" | "medios" | "origenes">("categorias");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const confirmDeleteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Long-press sobre un chip: lo deja en estado "confirmar borrado" por unos segundos
+  const startConfirmDelete = (id: string) => {
+    setConfirmDelete(id);
+    if (confirmDeleteTimer.current) clearTimeout(confirmDeleteTimer.current);
+    confirmDeleteTimer.current = setTimeout(() => setConfirmDelete(null), 2800);
+  };
 
   // Sync state
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [pendingLang, setPendingLang] = useState<"es" | "en" | null>(null);
+  // Acordeón de secciones (pestaña General) — todas cerradas por defecto
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const isOpen = (k: string) => !!openSections[k];
+  // Acordeón exclusivo: abrir una cierra las demás
+  const toggleSection = (k: string) => setOpenSections((p) => (p[k] ? {} : { [k]: true }));
   // Biometría
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioEnabled, setBioEnabled] = useState(false);
@@ -559,37 +627,46 @@ export default function ConfigPage() {
         <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5, display: "inline-block", background: "linear-gradient(110deg, var(--blue) 10%, var(--green) 90%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Settings</div>
       </div>
 
-      {/* Pills principales */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 20, overflowX: "auto", scrollbarWidth: "none" }}>
-        {TABS.map(tabItem => (
-          <button key={tabItem.id} onClick={() => { setTab(tabItem.id); setNuevoNombre(""); }}
-            className="pill"
-            style={{
-              flexShrink: 0,
-              borderColor: tab === tabItem.id ? "var(--accent)" : "var(--border)",
-              background: tab === tabItem.id ? "var(--accent-dim)" : "transparent",
-              color: tab === tabItem.id ? "var(--accent)" : "var(--muted)",
-            }}>
-            {tabItem.label}
-          </button>
-        ))}
-      </div>
+      {/* ── Acordeón unificado ── */}
+      <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
-      {/* ── CUENTA ── */}
-      {tab === "cuenta" && (
-        <div key="cuenta" className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-
-          {/* Sync */}
+          {/* ── Cuenta (incluye Sincronización) ── */}
           <div className="card">
-            <div className="label">{t.sync}</div>
+            <SectionHeader title={t.account} open={isOpen("account")} onClick={() => toggleSection("account")} danger={!!syncError} />
+            {isOpen("account") && (<div style={{ marginTop: 12 }}>
+
+            {/* Usuario */}
             <div className="row" style={{ padding: "10px 0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--surface-alt)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="var(--muted)" strokeWidth="1.7" />
+                    <path d="M4 20c0-3.87 3.58-7 8-7s8 3.13 8 7" stroke="var(--muted)" strokeWidth="1.7" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: 13 }}>{t.user}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{user?.email}</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
+                {(["es", "en"] as const).map((l) => (
+                  <button key={l} onClick={() => { if (l !== lang) setPendingLang(l); }} aria-label={l === "es" ? "Español" : "English"}
+                    style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, opacity: lang === l ? 1 : 0.35, filter: lang === l ? "none" : "grayscale(0.7)", transform: lang === l ? "scale(1.12)" : "scale(1)", transition: "all 0.15s" }}>
+                    {l === "es" ? <FlagAR /> : <FlagGB />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sincronización */}
+            <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: 10,
                   background: syncError ? "var(--red-dim)" : lastSync ? "var(--green-dim)" : "var(--surface-alt)",
                   border: `1px solid ${syncError ? "var(--red)44" : lastSync ? "var(--green)44" : "var(--border)"}`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                 }}>
                   <svg className={syncing ? "spin" : ""} width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"
@@ -634,11 +711,48 @@ export default function ConfigPage() {
                 )}
               </div>
             </div>
+
+            {/* Desbloqueo con huella */}
+            {bioAvailable && (
+              <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--surface-alt)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 11c0 3 0 6-1 8.5" /><path d="M8 11a4 4 0 0 1 8 0c0 3.5-.5 6-1.5 8" />
+                      <path d="M5 11a7 7 0 0 1 14 0c0 1.5 0 3-.3 4.5" /><path d="M3 9a9 9 0 0 1 4-3.5M21 9a9 9 0 0 0-4-3.5" />
+                    </svg>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13 }}>{t.biometricUnlock}</div>
+                    <div style={{ fontSize: 11, color: bioError ? "var(--red)" : "var(--muted)", marginTop: 2 }}>{bioError || t.biometricUnlockSub}</div>
+                  </div>
+                </div>
+                <Toggle activo={bioEnabled} onClick={toggleBiometric} />
+              </div>
+            )}
+
+            {/* Backup */}
+            <button onClick={() => setShowExportConfirm(true)} className="row" style={{ width: "100%", padding: "12px 0", borderTop: "1px solid var(--faint)", background: "none", border: "none", borderTopColor: "var(--faint)", cursor: "pointer", textAlign: "left" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--surface-alt)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: 13 }}>Backup</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{t.exportCSV}</div>
+                </div>
+              </div>
+            </button>
+
+            </div>)}
           </div>
 
           {/* Personalization */}
           <div className="card">
-            <div className="label" style={{ marginBottom: 16 }}>{t.general}</div>
+            <SectionHeader title={t.general} open={isOpen("general")} onClick={() => toggleSection("general")} />
+            {isOpen("general") && (<div style={{ marginTop: 16 }}>
 
             {/* Theme mode */}
             <div className="row" style={{ padding: "12px 0" }}>
@@ -821,143 +935,13 @@ export default function ConfigPage() {
               </div>
               <Toggle activo={config.meta.autoAhorro?.activo ?? false} onClick={handleToggleAutoAhorro} />
             </div>
+            </div>)}
           </div>
 
-          {/* Cuenta */}
+          {/* ── Movimientos ── */}
           <div className="card">
-            <div className="label">{t.account}</div>
-            <div className="row" style={{ padding: "10px 0" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  background: "var(--surface-alt)", border: "1px solid var(--border)",
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="8" r="4" stroke="var(--muted)" strokeWidth="1.7" />
-                    <path d="M4 20c0-3.87 3.58-7 8-7s8 3.13 8 7" stroke="var(--muted)" strokeWidth="1.7" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: 13 }}>{t.user}</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{user?.email}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Language */}
-            <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
-              <div style={{ fontSize: 13 }}>{t.language}</div>
-              <div style={{ display: "flex", gap: 12 }}>
-                {(["es", "en"] as const).map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLang(l)}
-                    aria-label={l === "es" ? "Español" : "English"}
-                    style={{
-                      background: "transparent", border: "none", cursor: "pointer", padding: 0,
-                      opacity: lang === l ? 1 : 0.35,
-                      filter: lang === l ? "none" : "grayscale(0.7)",
-                      transform: lang === l ? "scale(1.12)" : "scale(1)",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {l === "es" ? <FlagAR /> : <FlagGB />}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Desbloqueo con huella */}
-            {bioAvailable && (
-              <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    background: "var(--surface-alt)", border: "1px solid var(--border)",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 11c0 3 0 6-1 8.5" />
-                      <path d="M8 11a4 4 0 0 1 8 0c0 3.5-.5 6-1.5 8" />
-                      <path d="M5 11a7 7 0 0 1 14 0c0 1.5 0 3-.3 4.5" />
-                      <path d="M3 9a9 9 0 0 1 4-3.5M21 9a9 9 0 0 0-4-3.5" />
-                    </svg>
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13 }}>{t.biometricUnlock}</div>
-                    <div style={{ fontSize: 11, color: bioError ? "var(--red)" : "var(--muted)", marginTop: 2 }}>
-                      {bioError || t.biometricUnlockSub}
-                    </div>
-                  </div>
-                </div>
-                <Toggle activo={bioEnabled} onClick={toggleBiometric} />
-              </div>
-            )}
-          </div>
-
-          <div className="card">
-            <div className="label">App</div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, padding: "8px 0" }}>
-              {/* 1. Logo */}
-              <img src="/logo5-cropped.png" alt="FinMoves" style={{ width: 72, borderRadius: 12, objectFit: "contain", flexShrink: 0 }} />
-              {/* 2. Versión + changelog */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "var(--font-mono)", background: "linear-gradient(110deg, var(--blue) 10%, var(--green) 90%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>v{process.env.NEXT_PUBLIC_APP_VERSION}</div>
-                <button onClick={openChangelog} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 11, padding: 0, textDecoration: "underline" }}>changelog</button>
-              </div>
-              {/* 3. GitHub */}
-              <button onClick={() => setShowGithubConfirm(true)} aria-label="GitHub" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", flexShrink: 0, padding: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
-                </svg>
-                <span style={{ fontSize: 9, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600 }}>GitHub</span>
-              </button>
-              {/* 4. Export CSV */}
-              <button onClick={() => setShowExportConfirm(true)} aria-label={t.exportCSV} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", flexShrink: 0, padding: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                <span style={{ fontSize: 9, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600 }}>Backup</span>
-              </button>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
-            {confirmLogout ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <button onClick={() => setConfirmLogout(false)} style={{
-                  background: "none", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)",
-                  color: "var(--muted)", fontSize: 13, padding: "8px 16px", cursor: "pointer",
-                }}>{t.cancel}</button>
-                <button onClick={async () => { await signOut(auth); router.push("/login"); }} style={{
-                  background: "var(--red-dim)", border: "1px solid var(--red)44", borderRadius: "var(--radius-sm)",
-                  color: "var(--red)", fontSize: 13, fontWeight: 700, padding: "8px 16px", cursor: "pointer",
-                }}>{t.confirm}</button>
-              </div>
-            ) : (
-              <button onClick={() => setConfirmLogout(true)} aria-label={t.signOut} style={{
-                background: "transparent", border: "none", cursor: "pointer",
-                color: "var(--red)", display: "flex", alignItems: "center", justifyContent: "center",
-                width: 54, height: 54, borderRadius: "50%",
-                filter: "drop-shadow(0 2px 10px var(--red)88)",
-              }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── MOVIMIENTOS ── */}
-      {tab === "movimientos" && (
-        <div key="movimientos" className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <SectionHeader title={t.settingsTabMovements} open={isOpen("movimientos")} onClick={() => toggleSection("movimientos")} />
+            {isOpen("movimientos") && (<div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
 
           <div style={{ display: "flex", gap: 6 }}>
             {([
@@ -978,7 +962,7 @@ export default function ConfigPage() {
           </div>
 
           {movSub === "categorias" && (
-            <div className="card">
+            <div>
               <div className="label">{t.categories}</div>
               <div style={{ marginBottom: 14, display: "flex", flexDirection: "column", gap: 8 }}>
                 <div style={{ display: "flex", gap: 6 }}>
@@ -999,35 +983,25 @@ export default function ConfigPage() {
                   </button>
                 </div>
               </div>
-              {localCats.map(c => (
-                <div key={c.nombre} className="row">
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flex: 1 }}>
-                    {confirmDelete === `cat_${c.nombre}` ? (
-                      <>
-                        <span style={{ fontSize: 11, color: "var(--red)" }}>{t.deleteQ}</span>
-                        <button onClick={() => eliminarCategoriaLocal(c.nombre)} style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)44", borderRadius: "var(--radius-sm)", padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>{t.yes}</button>
-                        <button onClick={() => setConfirmDelete(null)} style={{ background: "var(--surface-alt)", color: "var(--muted)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>{t.no}</button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={() => setConfirmDelete(`cat_${c.nombre}`)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--red)", lineHeight: 1, fontSize: 12, flexShrink: 0 }}>✕</button>
-                        <span style={{ fontSize: 12, color: c.activa ? "var(--text)" : "var(--muted)" }}>{c.nombre}</span>
-                        <span className="badge" style={{
-                          background: c.tipo === "Gasto" ? "var(--red-dim)" : "var(--green-dim)",
-                          color: c.tipo === "Gasto" ? "var(--red)" : "var(--green)",
-                          border: `1px solid ${c.tipo === "Gasto" ? "var(--red)" : "var(--green)"}44`,
-                        }}>{c.tipo}</span>
-                      </>
-                    )}
-                  </div>
-                  {confirmDelete !== `cat_${c.nombre}` && <Toggle activo={c.activa} onClick={() => toggleCategoriaLocal(c.nombre)} />}
-                </div>
-              ))}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {[...localCats].sort((a, b) => a.tipo === b.tipo ? 0 : a.tipo === "Gasto" ? -1 : 1).map(c => (
+                  <Chip key={c.nombre} label={c.nombre}
+                    colorVar={c.tipo === "Gasto" ? "var(--red)" : "var(--green)"}
+                    dimVar={c.tipo === "Gasto" ? "var(--red-dim)" : "var(--green-dim)"}
+                    activo={c.activa}
+                    confirming={confirmDelete === `cat_${c.nombre}`}
+                    onToggle={() => toggleCategoriaLocal(c.nombre)}
+                    onLongPress={() => startConfirmDelete(`cat_${c.nombre}`)}
+                    onConfirmDelete={() => eliminarCategoriaLocal(c.nombre)}
+                  />
+                ))}
+              </div>
+              <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 12 }}>{t.chipHint}</div>
             </div>
           )}
 
           {movSub === "medios" && (
-            <div className="card">
+            <div>
               <div className="label">{t.paymentMethods}</div>
               <div style={{ marginBottom: 14, display: "flex", gap: 8 }}>
                 <input value={nuevoNombre} onChange={e => setNuevoNombre(e.target.value)}
@@ -1037,30 +1011,24 @@ export default function ConfigPage() {
                   +
                 </button>
               </div>
-              {localMedios.map(m => (
-                <div key={m.nombre} className="row">
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flex: 1 }}>
-                    {confirmDelete === `med_${m.nombre}` ? (
-                      <>
-                        <span style={{ fontSize: 11, color: "var(--red)" }}>{t.deleteQ}</span>
-                        <button onClick={() => eliminarMedioLocal(m.nombre)} style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)44", borderRadius: "var(--radius-sm)", padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>{t.yes}</button>
-                        <button onClick={() => setConfirmDelete(null)} style={{ background: "var(--surface-alt)", color: "var(--muted)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>{t.no}</button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={() => setConfirmDelete(`med_${m.nombre}`)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--red)", lineHeight: 1, fontSize: 12, flexShrink: 0 }}>✕</button>
-                        <span style={{ fontSize: 12, color: m.activo ? "var(--text)" : "var(--muted)" }}>{m.nombre}</span>
-                      </>
-                    )}
-                  </div>
-                  {confirmDelete !== `med_${m.nombre}` && <Toggle activo={m.activo} onClick={() => toggleMedioLocal(m.nombre)} />}
-                </div>
-              ))}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {localMedios.map(m => (
+                  <Chip key={m.nombre} label={m.nombre}
+                    colorVar="var(--blue)" dimVar="var(--blue-dim)"
+                    activo={m.activo}
+                    confirming={confirmDelete === `med_${m.nombre}`}
+                    onToggle={() => toggleMedioLocal(m.nombre)}
+                    onLongPress={() => startConfirmDelete(`med_${m.nombre}`)}
+                    onConfirmDelete={() => eliminarMedioLocal(m.nombre)}
+                  />
+                ))}
+              </div>
+              <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 12 }}>{t.chipHint}</div>
             </div>
           )}
 
           {movSub === "origenes" && (
-            <div className="card">
+            <div>
               <div className="label">{t.savingsOrigins}</div>
               <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 12, marginTop: -6 }}>{t.shownWhenAddingIncomeSavings}</div>
               <div style={{ marginBottom: 14, display: "flex", gap: 8 }}>
@@ -1071,71 +1039,50 @@ export default function ConfigPage() {
                   +
                 </button>
               </div>
-              {localOrigenes.map(o => (
-                <div key={o.nombre} className="row">
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flex: 1 }}>
-                    {confirmDelete === `ori_${o.nombre}` ? (
-                      <>
-                        <span style={{ fontSize: 11, color: "var(--red)" }}>{t.deleteQ}</span>
-                        <button onClick={() => eliminarOrigenLocal(o.nombre)} style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)44", borderRadius: "var(--radius-sm)", padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>{t.yes}</button>
-                        <button onClick={() => setConfirmDelete(null)} style={{ background: "var(--surface-alt)", color: "var(--muted)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>{t.no}</button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={() => setConfirmDelete(`ori_${o.nombre}`)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--red)", lineHeight: 1, fontSize: 12, flexShrink: 0 }}>✕</button>
-                        <span style={{ fontSize: 12, color: o.activo ? "var(--text)" : "var(--muted)" }}>{o.nombre}</span>
-                      </>
-                    )}
-                  </div>
-                  {confirmDelete !== `ori_${o.nombre}` && <Toggle activo={o.activo} onClick={() => toggleOrigenLocal(o.nombre)} />}
-                </div>
-              ))}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {localOrigenes.map(o => (
+                  <Chip key={o.nombre} label={o.nombre}
+                    colorVar="var(--green)" dimVar="var(--green-dim)"
+                    activo={o.activo}
+                    confirming={confirmDelete === `ori_${o.nombre}`}
+                    onToggle={() => toggleOrigenLocal(o.nombre)}
+                    onLongPress={() => startConfirmDelete(`ori_${o.nombre}`)}
+                    onConfirmDelete={() => eliminarOrigenLocal(o.nombre)}
+                  />
+                ))}
+              </div>
+              <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 12 }}>{t.chipHint}</div>
             </div>
           )}
 
-        </div>
-      )}
+            </div>)}
+          </div>
 
-      {/* ── REPORTES ── */}
-      {tab === "reportes" && (
-        <div key="reportes" className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {(["gastos", "ingresos", "movimientos", "periodos"] as const).map((sec) => (
-            <div key={sec} className="card">
-              <div className="label">{SECCION_LABEL[sec]}</div>
-              {REPORTES_TOGGLES.filter((r) => r.seccion === sec).map((r) => (
-                <div key={r.id} className="row">
-                  <span style={{ fontSize: 13, color: localIsEnabled(r.id) ? "var(--text)" : "var(--muted)" }}>{r.label}</span>
-                  <Toggle activo={localIsEnabled(r.id)} onClick={() => toggleLocalReporte(r.id)} />
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── AHORROS ── */}
-      {tab === "ahorros" && (
-        <div key="ahorros" className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* ── Inversión ── */}
+          {showAhorros && (
           <div className="card">
-            <div className="label">{t.savingsGoalSettings}</div>
-            <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 16, marginTop: -4 }}>
+            <SectionHeader title={t.settingsTabInvestments} open={isOpen("ahorros")} onClick={() => toggleSection("ahorros")} />
+            {isOpen("ahorros") && (<div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 12 }}>
               {t.currentReserve(simboloReserva, totalReserva.toFixed(2))}
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <div className="label" style={{ marginBottom: 6 }}>{t.targetDate}</div>
-              <input type="date" value={metaFecha}
-                onChange={(e) => setMetaFecha(e.target.value)} className="input" />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <div className="label" style={{ marginBottom: 6 }}>{t.targetAmount(monedaInversiones)}</div>
-              <input type="number" value={metaMonto} placeholder="0"
-                onChange={(e) => setMetaMonto(e.target.value)} className="input" />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+              <div>
+                <div className="label" style={{ marginBottom: 6 }}>{t.targetDate}</div>
+                <input type="date" value={metaFecha}
+                  onChange={(e) => setMetaFecha(e.target.value)} className="input" style={{ width: "100%" }} />
+              </div>
+              <div>
+                <div className="label" style={{ marginBottom: 6 }}>{t.targetAmount(monedaInversiones)}</div>
+                <input type="number" value={metaMonto} placeholder="0"
+                  onChange={(e) => setMetaMonto(e.target.value)} className="input" style={{ width: "100%" }} />
+              </div>
             </div>
 
             <div style={{
-              padding: "12px 14px", borderRadius: "var(--radius-sm)",
+              padding: "10px 14px", borderRadius: "var(--radius-sm)",
               background: "var(--surface-alt)", border: "1px solid var(--border)",
-              marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center",
+              marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center",
             }}>
               <div style={{ fontSize: 11, color: "var(--muted)" }}>{t.estimatedPerPeriod}</div>
               <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "var(--font-mono)", color: sugeridoPorPeriodo != null ? "var(--green)" : "var(--muted)" }}>
@@ -1143,7 +1090,7 @@ export default function ConfigPage() {
               </div>
             </div>
 
-            <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: 56, marginTop: 8 }}>
+            <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: 52, marginTop: 4 }}>
               <button onClick={guardarMetaAhorro} disabled={!isDirtyAhorros || guardando} style={{
                 width: 56, height: 56, borderRadius: "50%",
                 background: isDirtyAhorros ? "var(--green)" : "transparent",
@@ -1161,23 +1108,76 @@ export default function ConfigPage() {
                 }
               </button>
               {(metaFecha || metaMonto) && (
-                <button onClick={async () => {
-                  if (!config) return;
-                  const newMeta = { ...config.meta };
-                  delete newMeta.metaFecha; delete newMeta.metaMonto; delete newMeta.metaPorPeriodo;
-                  await saveConfig({ ...config, meta: newMeta });
-                  setMetaFecha(""); setMetaMonto("");
-                }} style={{ position: "absolute", right: 0, background: "none", border: "none", cursor: "pointer", color: "var(--red)", padding: 8 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                <button onClick={() => { setMetaFecha(""); setMetaMonto(""); }} aria-label="Limpiar" style={{ position: "absolute", right: 0, background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 8 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="20" y1="4" x2="12" y2="12" />
+                    <path d="M12.5 11.5 6 18l3 3 6.5-6.5z" />
+                    <path d="M7 17.5 5 19.5M9 18.5 7.5 20M11 19.5 10 21" />
                   </svg>
                 </button>
               )}
             </div>
 
+            </div>)}
           </div>
+          )}
+
+          {/* ── Reportes ── */}
+          {showReportes && (
+          <div className="card">
+            <SectionHeader title={t.settingsTabReports} open={isOpen("reportes")} onClick={() => toggleSection("reportes")} />
+            {isOpen("reportes") && (<div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 16 }}>
+              {(["gastos", "ingresos", "movimientos", "periodos"] as const).map((sec) => (
+                <div key={sec}>
+                  <div className="label" style={{ marginBottom: 8 }}>{SECCION_LABEL[sec]}</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {REPORTES_TOGGLES.filter((r) => r.seccion === sec).map((r) => {
+                      const on = localIsEnabled(r.id);
+                      return (
+                        <button key={r.id} onClick={() => toggleLocalReporte(r.id)} style={{
+                          padding: "7px 14px", borderRadius: 999, fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+                          whiteSpace: "nowrap", transition: "all 0.15s", touchAction: "manipulation",
+                          border: `1px solid ${on ? "var(--blue)" : "var(--border)"}`,
+                          background: on ? "var(--blue-dim)" : "transparent",
+                          color: on ? "var(--blue)" : "var(--muted)",
+                          opacity: on ? 1 : 0.55,
+                        }}>{r.label}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>)}
+          </div>
+          )}
+
+          {/* App + logout — los 3 en una fila */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 32, padding: "20px 0 8px" }}>
+            {/* GitHub */}
+            <button onClick={() => setShowGithubConfirm(true)} aria-label="GitHub" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", flexShrink: 0, padding: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+              </svg>
+              <span style={{ fontSize: 9, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600 }}>GitHub</span>
+            </button>
+
+            {/* Versión + changelog */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "var(--font-mono)", background: "linear-gradient(110deg, var(--blue) 10%, var(--green) 90%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>v{process.env.NEXT_PUBLIC_APP_VERSION}</div>
+              <button onClick={openChangelog} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 11, padding: 0, textDecoration: "underline" }}>changelog</button>
+            </div>
+
+            {/* Logout */}
+            <button onClick={() => setConfirmLogout(true)} aria-label={t.signOut} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--red)", flexShrink: 0, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", filter: "drop-shadow(0 2px 8px var(--red)66)" }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </button>
+          </div>
+
         </div>
-      )}
 
       {saveMsg && (
         <div className="fade-up" style={{
@@ -1351,7 +1351,17 @@ export default function ConfigPage() {
               <button onClick={() => setShowChangelog(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 22, lineHeight: 1, padding: 4 }}>×</button>
             </div>
             <div style={{ overflowY: "auto", padding: "16px 20px 32px", fontSize: 13, lineHeight: 1.65, color: "var(--text)" }}>
-              {changelog ? changelog.split("\n").map((line, i) => {
+              {changelog ? (() => {
+                // Sólo las últimas 5 versiones (cada versión empieza con "## [")
+                const all = changelog.split("\n");
+                const top: string[] = [];
+                let versions = 0;
+                for (const line of all) {
+                  if (line.startsWith("## [")) { versions++; if (versions > 5) break; }
+                  top.push(line);
+                }
+                return top;
+              })().map((line, i) => {
                 if (line.startsWith("## ")) return <div key={i} style={{ fontSize: 14, fontWeight: 700, margin: "16px 0 4px", color: "var(--blue)" }}>{line.replace(/^## /, "")}</div>;
                 if (line.startsWith("### ")) return <div key={i} style={{ fontSize: 11, fontWeight: 600, margin: "10px 0 2px", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{line.replace(/^### /, "")}</div>;
                 if (line.startsWith("- ")) return <div key={i} style={{ paddingLeft: 10, marginBottom: 3 }}>• {line.replace(/^- /, "")}</div>;
@@ -1389,6 +1399,39 @@ export default function ConfigPage() {
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setShowGithubConfirm(false)} style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "1px solid var(--border)", background: "none", color: "var(--muted)", fontSize: 14, cursor: "pointer" }}>{t.cancel}</button>
               <button onClick={() => { window.open("https://github.com/dsimdev/finmoves-app/blob/main/README.md", "_blank", "noopener,noreferrer"); setShowGithubConfirm(false); }} style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "none", background: "var(--blue)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>{t.goToGitHub}</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {confirmLogout && mounted && createPortal(
+        <div onClick={() => setConfirmLogout(false)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "24px 20px 32px" }}>
+            <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 2, margin: "0 auto 20px" }} />
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{t.signOutTitle}</div>
+            <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 24 }}>{t.signOutBody}</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setConfirmLogout(false)} style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "1px solid var(--border)", background: "none", color: "var(--muted)", fontSize: 14, cursor: "pointer" }}>{t.cancel}</button>
+              <button onClick={async () => { await signOut(auth); router.push("/login"); }} style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "none", background: "var(--red)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>{t.signOut}</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {pendingLang && mounted && createPortal(
+        <div onClick={() => setPendingLang(null)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "24px 20px 32px" }}>
+            <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 2, margin: "0 auto 20px" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+              {pendingLang === "es" ? <FlagAR /> : <FlagGB />}
+              <span style={{ fontSize: 16, fontWeight: 700 }}>{t.changeLanguageTitle}</span>
+            </div>
+            <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 24 }}>{t.changeLanguageBody}</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setPendingLang(null)} style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "1px solid var(--border)", background: "none", color: "var(--muted)", fontSize: 14, cursor: "pointer" }}>{t.cancel}</button>
+              <button onClick={() => { setLang(pendingLang); window.location.href = "/"; }} style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "none", background: "var(--blue)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>{t.confirm}</button>
             </div>
           </div>
         </div>,

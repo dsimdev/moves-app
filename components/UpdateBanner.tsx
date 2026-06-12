@@ -1,13 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { useVersionCheck } from "@/hooks/useVersionCheck";
+import { useSwUpdate } from "@/hooks/useSwUpdate";
 import { useT } from "@/hooks/useTranslation";
 
 export function UpdateBanner() {
-  const hasUpdate = useVersionCheck();
+  const waiting = useSwUpdate((s) => s.waiting);
   const t = useT();
-  if (!hasUpdate) return null;
+  if (!waiting) return null;
+
+  const applyUpdate = () => {
+    // Pide al SW en espera que se active; controllerchange disparará el reload.
+    waiting.postMessage({ type: "SKIP_WAITING" });
+  };
 
   return (
     <div style={{
@@ -55,7 +60,7 @@ export function UpdateBanner() {
         </div>
 
         <button
-          onClick={() => window.location.reload()}
+          onClick={applyUpdate}
           className="btn"
           style={{
             position: "relative", width: "100%", height: 50, borderRadius: 14, border: "none",

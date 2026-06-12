@@ -4,6 +4,29 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.19.0] — 2026-06-11
+
+### Changed
+- **Settings fully restructured into a single screen** — tabs removed; everything is now an accordion (one section open at a time). Order: Account (with Sync inside) → General → Movements → Investments → Reports → App row → logout
+- **Categories / Methods / Origins → color chips**: tap to toggle (dimmed = off), long-press to delete (chip turns into a trash-confirm, auto-cancels after ~3s); categories grouped by type so new ones land at the end of their group
+- **Reports toggles → chips** as well
+- Language switch now opens a **confirmation modal** (flag + "Change language?") and reloads to Home on confirm
+- Logout now opens a **bottom-sheet confirmation** (red button) instead of inline confirm
+- Investments savings-goal: date + target side by side, tighter spacing, label shortened to "Target (currency)"; the destructive trash was replaced by a **broom that only clears the inputs** (user saves with the check)
+- App block: removed the logo; GitHub + version/changelog + logout sit in one row
+- Changelog modal now shows only the **last 5 versions**
+
+### Added
+- **User-facing changelog** (`CHANGELOG_USER.md`) — the in-app changelog reads this curated, plain-language file (highlights new features); the full technical `CHANGELOG.md` stays on GitHub
+
+### Fixed
+- **Update banner rebuilt around the service worker (proper PWA pattern)** — the SW is now served from `/sw.js` with the build version injected, so each deploy is detected; the new SW waits instead of activating silently, the banner offers to update, and confirming sends `SKIP_WAITING` → `controllerchange` → reload. Replaces the version-polling approach that the service worker had silently superseded
+
+### Notes
+- The update-banner change only validates in production; the first deploy with it is a transition (replaces the old SW). Reliable banner behavior starts from the second deploy that includes this system
+
+---
+
 ## [1.18.1] — 2026-06-11
 
 ### Fixed
