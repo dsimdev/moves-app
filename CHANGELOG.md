@@ -4,6 +4,17 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.26.0] — 2026-06-13
+
+### Changed (Investments redesign)
+- Applied the Reports "Hero + mini-stats" pattern: reserve hero (USD/EUR) kept the yellow gradient; Goal and history cards now use the neutral surface gradient with standard borders.
+- Reserve avg-price/profit and Goal stats moved into borderless `MiniStat` cards; profit shows signed % as sub.
+- Cleaner hero rate line ("≈ $… · oficial $…", dropped "cotiz.").
+- Unified metric window to the **last 3 periods** for the Goal mini-stats (Per period, Projection, To goal); "Per period" now uses avg saved (was lifetime/accumulated). Numbers formatted with thousands separators.
+- Labels to sentence case (Precio prom., Ganancia).
+
+---
+
 ## [1.25.1] — 2026-06-13
 
 ### Changed

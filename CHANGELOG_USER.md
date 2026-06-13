@@ -4,6 +4,14 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [1.26.0] — 2026-06-13
+
+### Mejoras
+- **Inversión renovada**: misma estética que Reportes. La Reserva (USD/EUR) queda como tarjeta destacada y el resto con un look más limpio y parejo. Los datos de precio promedio, ganancia y la meta ahora se ven en tarjetitas ordenadas.
+- Los números de la meta se calculan todos con la misma base (promedio de los últimos 3 períodos), así son coherentes entre sí, y se muestran con separador de miles.
+
+---
+
 ## [1.25.1] — 2026-06-13
 
 ### Mejoras
