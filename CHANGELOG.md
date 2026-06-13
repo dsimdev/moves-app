@@ -4,6 +4,15 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.29.0] — 2026-06-13
+
+### Added
+- Reusable `components/movements/MovementModal` (add/edit/delete) extracted from the Movements page.
+- Dashboard now opens the New movement and Edit modals **in place** (no navigation): the "New movement" shortcut and tapping a recent movement open the modal on Home.
+- App icon **badge** (Badging API) showing the current period's movement count on the installed app.
+
+---
+
 ## [1.28.0] — 2026-06-13
 
 ### PWA standard
