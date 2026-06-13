@@ -275,11 +275,13 @@ export default function ConfigPage() {
       } else {
         const ok = await enablePush(user.uid);
         if (ok) setPushOn(true);
-        else { setPushError(t.notificationsDenied); setTimeout(() => setPushError(""), 3000); }
+        else { setPushError(t.notificationsDenied); setTimeout(() => setPushError(""), 6000); }
       }
-    } catch {
-      setPushError(t.notificationsError);
-      setTimeout(() => setPushError(""), 3000);
+    } catch (err) {
+      console.error("push toggle:", err);
+      const msg = err instanceof Error ? `${err.name}: ${err.message}` : t.notificationsError;
+      setPushError(msg);
+      setTimeout(() => setPushError(""), 8000);
     } finally {
       setPushBusy(false);
     }

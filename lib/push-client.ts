@@ -37,13 +37,15 @@ export async function enablePush(uid: string): Promise<boolean> {
   const perm = await Notification.requestPermission();
   if (perm !== "granted") return false;
   const reg = await navigator.serviceWorker.ready;
-  let sub = await reg.pushManager.getSubscription();
-  if (!sub) {
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC),
-    });
-  }
+  // Una suscripción previa pudo crearse con OTRA clave VAPID (p. ej. tras regenerarla):
+  // re-suscribir con una applicationServerKey distinta lanza InvalidStateError.
+  // Por eso desuscribimos siempre y recreamos con la VAPID actual.
+  const existing = await reg.pushManager.getSubscription();
+  if (existing) await existing.unsubscribe().catch(() => {});
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC),
+  });
   await setDoc(doc(db, `users/${uid}/config/push`), { subscription: sub.toJSON(), updatedAt: Date.now() });
   return true;
 }

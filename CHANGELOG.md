@@ -4,6 +4,13 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.29.1] — 2026-06-13
+
+### Fixed
+- Push notifications: `enablePush` now always unsubscribes any stale subscription and re-subscribes with the current VAPID key (fixes activation breaking after the VAPID pair was regenerated). Toggle surfaces the real error if it still fails.
+
+---
+
 ## [1.29.0] — 2026-06-13
 
 ### Added
