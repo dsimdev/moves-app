@@ -24,15 +24,17 @@ export default function OnboardingPage() {
   const [moneda, setMoneda] = useState<Moneda>("ARS");
   const [invierte, setInvierte] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
+  // Modo "ver de nuevo": no redirige aunque el onboarding ya esté completo.
+  const replay = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("replay");
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login");
   }, [authLoading, user, router]);
 
-  // Si ya completó el onboarding, fuera.
+  // Si ya completó el onboarding (y no es replay), fuera.
   useEffect(() => {
-    if (config && config.meta.onboardingCompleto !== false) router.replace("/");
-  }, [config, router]);
+    if (!replay && config && config.meta.onboardingCompleto !== false) router.replace("/");
+  }, [config, router, replay]);
 
   if (authLoading || cfgLoading || !user || !config) {
     return <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center" }}><LoadingSpinner /></div>;
@@ -40,6 +42,8 @@ export default function OnboardingPage() {
 
   const finish = async () => {
     if (saving) return;
+    // En modo "ver de nuevo" no toca la config; solo vuelve.
+    if (replay) { router.replace("/"); return; }
     setSaving(true);
     setMonedaPrincipal(moneda);
     setPref("showAhorros", !!invierte);

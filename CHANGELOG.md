@@ -4,6 +4,15 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.24.0] — 2026-06-13
+
+### Added
+- **User profile modal** — tapping the User row opens a modal to edit name and change password. Once a name is set, the user icon turns green and the name replaces "User".
+- Language flags moved into the profile modal.
+- **Guide section** in Settings (below Reports): explains how the app works + what each section does, with a "Replay the tutorial" button that reopens the onboarding in replay mode (without touching config).
+
+---
+
 ## [1.23.3] — 2026-06-13
 
 ### Changed

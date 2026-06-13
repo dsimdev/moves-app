@@ -10,7 +10,7 @@ import { agruparPorPeriodo } from "@/utils/periodo";
 import { parsePeriodoId } from "@/utils/reportes";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db, auth } from "@/services/firebase/firebase";
-import { signOut, getIdToken } from "firebase/auth";
+import { signOut, getIdToken, updatePassword } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import type { ConfigUsuario } from "@/types";
 import { formatTimestampAR, isoToFechaAR, sanitizeCell } from "@/lib/sheet-format";
@@ -182,6 +182,45 @@ export default function ConfigPage() {
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [pendingLang, setPendingLang] = useState<"es" | "en" | null>(null);
+  // Modal de perfil de usuario
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [passInput, setPassInput] = useState("");
+  const [profileMsg, setProfileMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [profileBusy, setProfileBusy] = useState(false);
+  const openUserModal = () => {
+    setNameInput(config?.meta.nombre ?? "");
+    setPassInput("");
+    setProfileMsg(null);
+    setShowUserModal(true);
+  };
+  const saveProfile = async () => {
+    if (profileBusy || !config) return;
+    setProfileBusy(true); setProfileMsg(null);
+    try {
+      const nombre = nameInput.trim();
+      if (nombre !== (config.meta.nombre ?? "")) {
+        await saveConfig({ ...config, meta: { ...config.meta, nombre: nombre || undefined } });
+      }
+      if (passInput) {
+        if (passInput.length < 6) { setProfileMsg({ ok: false, text: t.regWeakPassword }); return; }
+        try {
+          await updatePassword(auth.currentUser!, passInput);
+        } catch (err) {
+          const code = (err as { code?: string })?.code ?? "";
+          setProfileMsg({ ok: false, text: code === "auth/requires-recent-login" ? t.reauthNeeded : t.profileError });
+          return;
+        }
+      }
+      setProfileMsg({ ok: true, text: t.profileSaved });
+      setPassInput("");
+      setTimeout(() => setShowUserModal(false), 900);
+    } catch {
+      setProfileMsg({ ok: false, text: t.profileError });
+    } finally {
+      setProfileBusy(false);
+    }
+  };
   // Acordeón de secciones (pestaña General) — todas cerradas por defecto
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const isOpen = (k: string) => !!openSections[k];
@@ -697,29 +736,26 @@ export default function ConfigPage() {
             <SectionHeader title={t.account} open={isOpen("account")} onClick={() => toggleSection("account")} danger={!!syncError} />
             {isOpen("account") && (<div style={{ marginTop: 12 }}>
 
-            {/* Usuario */}
-            <div className="row" style={{ padding: "10px 0" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--surface-alt)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            {/* Usuario — abre modal de perfil */}
+            {(() => { const tieneNombre = !!config.meta.nombre; return (
+            <button onClick={openUserModal} className="row" style={{ width: "100%", padding: "10px 0", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: tieneNombre ? "var(--green-dim)" : "var(--surface-alt)", border: `1px solid ${tieneNombre ? "var(--green)44" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="8" r="4" stroke="var(--muted)" strokeWidth="1.7" />
-                    <path d="M4 20c0-3.87 3.58-7 8-7s8 3.13 8 7" stroke="var(--muted)" strokeWidth="1.7" strokeLinecap="round" />
+                    <circle cx="12" cy="8" r="4" stroke={tieneNombre ? "var(--green)" : "var(--muted)"} strokeWidth="1.7" />
+                    <path d="M4 20c0-3.87 3.58-7 8-7s8 3.13 8 7" stroke={tieneNombre ? "var(--green)" : "var(--muted)"} strokeWidth="1.7" strokeLinecap="round" />
                   </svg>
                 </div>
-                <div>
-                  <div style={{ fontSize: 13 }}>{t.user}</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{user?.email}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{config.meta.nombre || t.user}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user?.email}</div>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
-                {(["es", "en"] as const).map((l) => (
-                  <button key={l} onClick={() => { if (l !== lang) setPendingLang(l); }} aria-label={l === "es" ? "Español" : "English"}
-                    style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, opacity: lang === l ? 1 : 0.35, filter: lang === l ? "none" : "grayscale(0.7)", transform: lang === l ? "scale(1.12)" : "scale(1)", transition: "all 0.15s" }}>
-                    {l === "es" ? <FlagAR /> : <FlagGB />}
-                  </button>
-                ))}
-              </div>
-            </div>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink: 0 }}>
+                <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            ); })()}
 
             {/* Sincronización (solo dueño) */}
             {isOwner && (
@@ -1262,6 +1298,27 @@ export default function ConfigPage() {
           </div>
           )}
 
+          {/* ── Guía ── */}
+          <div className="card">
+            <SectionHeader title={t.guideSection} open={isOpen("guia")} onClick={() => toggleSection("guia")} />
+            {isOpen("guia") && (<div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t.guideHowTitle}</div>
+                <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.6 }}>{t.obHowBody}</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[t.guideMovements, t.guideInvestments, t.guideReports].map((txt, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>
+                    <span style={{ color: "var(--accent)", flexShrink: 0 }}>•</span>{txt}
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => router.push("/onboarding?replay=1")} style={{ marginTop: 4, height: 44, borderRadius: 12, border: "1px solid var(--accent)44", background: "var(--accent-dim)", color: "var(--accent)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                {t.replayTutorial}
+              </button>
+            </div>)}
+          </div>
+
           {/* App + logout — los 3 en una fila */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 32, padding: "20px 0 8px" }}>
             {/* GitHub */}
@@ -1511,6 +1568,48 @@ export default function ConfigPage() {
               <button onClick={() => setShowGithubConfirm(false)} style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "1px solid var(--border)", background: "none", color: "var(--muted)", fontSize: 14, cursor: "pointer" }}>{t.cancel}</button>
               <button onClick={() => { window.open("https://github.com/dsimdev/finmoves-app/blob/main/README.md", "_blank", "noopener,noreferrer"); setShowGithubConfirm(false); }} style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "none", background: "var(--blue)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>{t.goToGitHub}</button>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {showUserModal && mounted && createPortal(
+        <div onClick={() => setShowUserModal(false)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "24px 20px 36px" }}>
+            <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 2, margin: "0 auto 20px" }} />
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{t.editProfile}</div>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 20 }}>{user?.email}</div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div className="label" style={{ marginBottom: 6 }}>{t.nameLabel}</div>
+              <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} className="input" style={{ width: "100%" }} placeholder={t.namePlaceholder} maxLength={40} />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div className="label" style={{ marginBottom: 6 }}>{t.newPasswordLabel}</div>
+              <input type="password" value={passInput} onChange={(e) => setPassInput(e.target.value)} className="input" style={{ width: "100%" }} placeholder={t.newPasswordPlaceholder} autoComplete="new-password" />
+            </div>
+
+            {/* Idioma */}
+            <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)", marginBottom: 16 }}>
+              <div style={{ fontSize: 13 }}>{t.changeLang}</div>
+              <div style={{ display: "flex", gap: 12 }}>
+                {(["es", "en"] as const).map((l) => (
+                  <button key={l} onClick={() => { if (l !== lang) setPendingLang(l); }} aria-label={l === "es" ? "Español" : "English"}
+                    style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, opacity: lang === l ? 1 : 0.35, filter: lang === l ? "none" : "grayscale(0.7)", transform: lang === l ? "scale(1.12)" : "scale(1)", transition: "all 0.15s" }}>
+                    {l === "es" ? <FlagAR /> : <FlagGB />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {profileMsg && (
+              <div style={{ fontSize: 12, color: profileMsg.ok ? "var(--green)" : "var(--red)", marginBottom: 12, lineHeight: 1.5 }}>{profileMsg.text}</div>
+            )}
+
+            <button onClick={saveProfile} disabled={profileBusy} style={{ width: "100%", padding: "13px 0", borderRadius: 12, border: "none", background: "linear-gradient(110deg, var(--blue) 10%, var(--green) 130%)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: profileBusy ? 0.6 : 1 }}>
+              {t.saveProfile}
+            </button>
           </div>
         </div>,
         document.body

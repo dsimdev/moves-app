@@ -4,6 +4,34 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [1.24.0] — 2026-06-13
+
+### Novedades
+- **Tu perfil**: tocá tu usuario en Configuración para ponerte un **nombre** y cambiar la **contraseña**. Cuando cargás tu nombre, aparece en lugar de "Usuario".
+- **Guía siempre a mano**: nueva sección "Guía" en Configuración que explica cómo funciona la app, con un botón para **volver a ver el tutorial** cuando quieras.
+- El selector de idioma ahora vive dentro de tu perfil.
+
+---
+
+## [1.23.0] — 2026-06-13
+
+### Novedades
+- **Reportes renovados por completo**: Gastos, Ingresos, Movimientos y Períodos quedaron más limpios y modernos, con un dato principal destacado arriba y métricas claras debajo.
+- Movimientos ahora muestra la distribución por tipo y el movimiento más grande del período.
+- Períodos pasó a ser una vista histórica (deja de repetir datos que ya ves en otras secciones).
+
+### Mejoras
+- Los montos grandes en Reportes ahora se ven completos (abreviados, ej. $1,6M).
+
+---
+
+## [1.22.2] — 2026-06-12
+
+### Mejoras
+- Arranque guiado para cuentas nuevas: si todavía no empezaste, la app te lleva a cargar tu primer sueldo.
+
+---
+
 ## [1.22.1] — 2026-06-12
 
 ### Mejoras
