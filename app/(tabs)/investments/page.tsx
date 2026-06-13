@@ -44,6 +44,17 @@ function calcularReserva(movimientos: Movimiento[], moneda: "USD" | "EUR") {
   return { total, costoTotalARS, costoPromedio: total > 0 ? costoTotalARS / total : 0 };
 }
 
+// Mini-stat compacta, mismo estilo que en Reportes.
+function MiniStat({ label, value, sub, color, center }: { label: string; value: string; sub?: string; color?: string; center?: boolean }) {
+  return (
+    <div style={{ background: "var(--surface-alt)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "11px 12px", minWidth: 0, flex: "1 1 0", textAlign: center ? "center" : undefined }}>
+      <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 700, color: color ?? "var(--text)", fontFamily: "var(--font-mono)", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
+      {sub && <div style={{ fontSize: 9, color: "var(--muted)", marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>}
+    </div>
+  );
+}
+
 export default function DolaresPage() {
   const { user } = useAuth();
   const { movimientos, loading } = useAllMovimientos(user?.uid);
@@ -139,25 +150,22 @@ export default function DolaresPage() {
             </div>
             {reservaUSDenARS && (
               <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
-                ≈ {money(reservaUSDenARS)} · {tipoCambioRef === "oficial" ? t.rateOfficial : t.rateBlue} {t.rate} ${cotizacionUSD?.toLocaleString("es-AR")}
-              </div>
-            )}
-            {gananciaUSD !== null && (
-              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between" }}>
-                <div>
-                  <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 2, marginBottom: 4 }}>{t.avgPrice}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>{oculto ? MASK : "$" + costoPromedioUSD.toLocaleString("es-AR", { maximumFractionDigits: 0 })}</div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 2, marginBottom: 4 }}>{t.profit}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: gananciaUSD >= 0 ? "var(--green)" : "var(--red)" }}>
-                    {gananciaUSD >= 0 ? "+" : ""}{money(gananciaUSD)}
-                    {gananciaPctUSD !== null && <span style={{ fontSize: 10, marginLeft: 4 }}>({gananciaPctUSD.toFixed(1)}%)</span>}
-                  </div>
-                </div>
+                ≈ {money(reservaUSDenARS)} · {tipoCambioRef === "oficial" ? t.rateOfficial : t.rateBlue} ${cotizacionUSD?.toLocaleString("es-AR")}
               </div>
             )}
           </div>
+
+          {gananciaUSD !== null && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <MiniStat label={t.avgPrice} value={oculto ? MASK : "$" + costoPromedioUSD.toLocaleString("es-AR", { maximumFractionDigits: 0 })} color="var(--yellow)" />
+              <MiniStat
+                label={t.profit}
+                value={oculto ? MASK : `${gananciaUSD >= 0 ? "+" : ""}${money(gananciaUSD)}`}
+                sub={gananciaPctUSD !== null && !oculto ? `${gananciaUSD >= 0 ? "+" : ""}${gananciaPctUSD.toFixed(1)}%` : undefined}
+                color={gananciaUSD >= 0 ? "var(--green)" : "var(--red)"}
+              />
+            </div>
+          )}
 
           </>)}
 
@@ -180,25 +188,22 @@ export default function DolaresPage() {
             </div>
             {reservaEURenARS && (
               <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
-                ≈ {money(reservaEURenARS)} · {tipoCambioRef === "oficial" ? t.rateOfficial : t.rateBlue} {t.rate} ${cotizacionEUR?.toLocaleString("es-AR")}
-              </div>
-            )}
-            {gananciaEUR !== null && (
-              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between" }}>
-                <div>
-                  <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 2, marginBottom: 4 }}>{t.avgPrice}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>{oculto ? MASK : "$" + costoPromedioEUR.toLocaleString("es-AR", { maximumFractionDigits: 0 })}</div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 2, marginBottom: 4 }}>{t.profit}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: gananciaEUR >= 0 ? "var(--green)" : "var(--red)" }}>
-                    {gananciaEUR >= 0 ? "+" : ""}{money(gananciaEUR)}
-                    {gananciaPctEUR !== null && <span style={{ fontSize: 10, marginLeft: 4 }}>({gananciaPctEUR.toFixed(1)}%)</span>}
-                  </div>
-                </div>
+                ≈ {money(reservaEURenARS)} · {tipoCambioRef === "oficial" ? t.rateOfficial : t.rateBlue} ${cotizacionEUR?.toLocaleString("es-AR")}
               </div>
             )}
           </div>
+
+          {gananciaEUR !== null && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <MiniStat label={t.avgPrice} value={oculto ? MASK : "$" + costoPromedioEUR.toLocaleString("es-AR", { maximumFractionDigits: 0 })} color="var(--yellow)" />
+              <MiniStat
+                label={t.profit}
+                value={oculto ? MASK : `${gananciaEUR >= 0 ? "+" : ""}${money(gananciaEUR)}`}
+                sub={gananciaPctEUR !== null && !oculto ? `${gananciaEUR >= 0 ? "+" : ""}${gananciaPctEUR.toFixed(1)}%` : undefined}
+                color={gananciaEUR >= 0 ? "var(--green)" : "var(--red)"}
+              />
+            </div>
+          )}
 
           </>)}
 
@@ -239,27 +244,17 @@ export default function DolaresPage() {
                   <span style={{ fontSize: 11, fontWeight: 700, color: barColor, fontFamily: "var(--font-mono)", minWidth: 36, textAlign: "right" }}>{pctMeta.toFixed(1)}%</span>
                 </div>
 
-                {/* Mini-stats inline */}
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
-                  <div>
-                    <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 1, marginBottom: 4 }}>{t.statPerPeriod}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                      {oculto ? "••" : totalDisplay.toFixed(0)}<span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 400 }}>/{metaUSD}</span>
-                    </div>
-                  </div>
+                {/* Mini-stats */}
+                <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                  <MiniStat center color="var(--yellow)" label={t.statPerPeriod}
+                    value={`${oculto ? "••" : (promAhorroUSD !== null ? Math.round(promAhorroUSD).toLocaleString("es-AR") : "—")} / ${Math.round(metaUSD).toLocaleString("es-AR")}`} />
                   {proyUSD !== null && (
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 1, marginBottom: 4 }}>{t.statProjection}</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>{oculto ? "••••" : proyUSD.toFixed(0)}</div>
-                    </div>
+                    <MiniStat center color="var(--yellow)" label={t.statProjection}
+                      value={oculto ? "••••" : Math.round(proyUSD).toLocaleString("es-AR")} />
                   )}
                   {periodosParaMeta !== null && (
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 1, marginBottom: 4 }}>{t.statToGoal}</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--yellow)", fontFamily: "var(--font-mono)" }}>
-                        {periodosParaMeta === 0 ? t.reached : `${periodosParaMeta} ${t.periodsShort}`}
-                      </div>
-                    </div>
+                    <MiniStat center color="var(--yellow)" label={t.statToGoal}
+                      value={periodosParaMeta === 0 ? t.reached : `${periodosParaMeta} ${t.periodsShort}`} />
                   )}
                 </div>
               </div>
