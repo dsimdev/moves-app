@@ -13,6 +13,7 @@ import { Movimiento } from "@/types";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { MiniStat } from "@/components/ui/MiniStat";
 import { MovementModal } from "@/components/movements/MovementModal";
+import { useAppBadge } from "@/hooks/useAppBadge";
 import { useT } from "@/hooks/useTranslation";
 
 function TipoColor(m: Movimiento) {
@@ -45,6 +46,8 @@ export default function Dashboard() {
   const p = periodos[0];
   const ahorrosAcum = serie.length ? serie[serie.length - 1].ahorrosAcum : 0;
   const ultimos = p?.movimientos.slice(0, 5) ?? [];
+  // Badge en el ícono de la app: cantidad de movimientos del período actual.
+  useAppBadge(p?.movimientos.length);
   const pctDisp = p && p.total > 0 ? Math.round((p.disponible / p.total) * 100) : 0;
   const barColor = pctDisp < 10 ? "var(--red)" : pctDisp < 50 ? "var(--yellow)" : "var(--green)";
   const barColorDim = pctDisp < 10 ? "var(--red-dim)" : pctDisp < 50 ? "var(--yellow-dim)" : "var(--green-dim)";
