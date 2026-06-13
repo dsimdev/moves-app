@@ -135,13 +135,15 @@ export default function Dashboard() {
                 </span>
               </div>
             ))}
-            <Link href="/movements" style={{
-              display: "block", textAlign: "center", margin: "14px auto 2px",
-              color: "var(--muted)", fontSize: 12, fontStyle: "italic",
-              textDecoration: "none",
-            }}>
-              {t.seeMore}
-            </Link>
+            {p.movimientos.length > 5 && (
+              <Link href="/movements" style={{
+                display: "block", textAlign: "center", margin: "14px auto 2px",
+                color: "var(--muted)", fontSize: 12, fontStyle: "italic",
+                textDecoration: "none",
+              }}>
+                {t.seeMore}
+              </Link>
+            )}
           </div>
         </div>
       )}

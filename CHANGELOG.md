@@ -4,6 +4,15 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.22.2] — 2026-06-12
+
+### Changed
+- **Guided new-user start** — with no period yet, the New movement form only offers Income → Salary (other types hidden, category forced) to steer the user into opening their first period.
+- Dashboard "see more" is hidden when there are 5 or fewer movements.
+- The Google Sheets sync row is now shown only to the owner.
+
+---
+
 ## [1.22.1] — 2026-06-12
 
 ### Fixed

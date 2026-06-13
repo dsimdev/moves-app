@@ -721,7 +721,8 @@ export default function ConfigPage() {
               </div>
             </div>
 
-            {/* Sincronización */}
+            {/* Sincronización (solo dueño) */}
+            {isOwner && (
             <div className="row" style={{ padding: "12px 0", borderTop: "1px solid var(--faint)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{
@@ -773,6 +774,7 @@ export default function ConfigPage() {
                 )}
               </div>
             </div>
+            )}
 
             {/* Desbloqueo con huella */}
             {bioAvailable && (

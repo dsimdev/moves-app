@@ -205,8 +205,10 @@ export default function MovimientosPage() {
   const categoriasFiltradas = tipo === "Gasto"
     ? (config?.categorias.filter(c => c.tipo === "Gasto" && c.activa) ?? [])
     : tipo === "Ingreso"
-    ? [{ id: "sueldo", nombre: "Sueldo", tipo: "Ingreso" as const, activa: true },
-       { id: "ahorros", nombre: "Ahorros", tipo: "Ingreso" as const, activa: true }]
+    ? (periodos.length === 0
+       ? [{ id: "sueldo", nombre: "Sueldo", tipo: "Ingreso" as const, activa: true }]
+       : [{ id: "sueldo", nombre: "Sueldo", tipo: "Ingreso" as const, activa: true },
+          { id: "ahorros", nombre: "Ahorros", tipo: "Ingreso" as const, activa: true }])
     : [];
 
   const cotizActual = cotizManual ? parseFloat(cotizManual) : cotizacion?.oficial ?? 0;
@@ -261,7 +263,12 @@ export default function MovimientosPage() {
     setFecha(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`);
   };
 
-  const openAdd = () => { resetAdd(); setTipo("Gasto"); setModal("add"); };
+  const openAdd = () => {
+    resetAdd();
+    if (periodos.length === 0) { setTipo("Ingreso"); setCategoria("Sueldo"); }
+    else setTipo("Gasto");
+    setModal("add");
+  };
 
   const openEdit = (m: Movimiento) => {
     setMovSel(m);
@@ -489,8 +496,8 @@ export default function MovimientosPage() {
             <div style={{ marginBottom: 18 }}>
               <div className="label">{t.type}</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {TIPOS.map(({ t, label, color }) => (
-                  <button key={t} type="button" onClick={() => { setTipo(t); resetAdd(); }}
+                {(periodos.length === 0 ? TIPOS.filter(x => x.t === "Ingreso") : TIPOS).map(({ t, label, color }) => (
+                  <button key={t} type="button" onClick={() => { setTipo(t); resetAdd(); if (periodos.length === 0) setCategoria("Sueldo"); }}
                     className="pill" style={{
                       borderColor: tipo === t ? color : "var(--border)",
                       background: tipo === t ? color + "22" : "transparent",
