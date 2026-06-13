@@ -143,6 +143,7 @@ export const en: AppLocale = {
   prevPeriodRemaining: "Previous period remaining",
   spentPerPeriod: "Spent per period",
   periodAvg: "Period avg.",
+  periodAvgSpent: "Avg. spent / period",
   periodsCount: (n: number) => `${n} periods`,
   bestPeriod: "Best period",
   worstPeriod: "Worst period",

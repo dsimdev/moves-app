@@ -141,6 +141,7 @@ export const es = {
   prevPeriodRemaining: "Resto período anterior",
   spentPerPeriod: "Gastado por período",
   periodAvg: "Prom. período",
+  periodAvgSpent: "Promedio gastado / período",
   periodsCount: (n: number) => `${n} períodos`,
   bestPeriod: "Mejor período",
   worstPeriod: "Peor período",

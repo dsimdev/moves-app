@@ -4,6 +4,13 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.23.2] — 2026-06-13
+
+### Changed
+- Reports → Periods fully redesigned: removed the 6 per-period KPIs that duplicated other sections (Salary, Withdrawals, Spent, Available, Projection, Remainder). Now it's a clean historical/comparative view — hero "Avg. spent / period", Best/Worst mini-stats, and the three period charts (spent per period, expenses vs salary, income evolution).
+
+---
+
 ## [1.23.1] — 2026-06-13
 
 ### Changed

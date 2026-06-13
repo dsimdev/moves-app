@@ -766,13 +766,13 @@ export default function ReportesPage() {
           {sub === "periodos" && periodo && (
             <>
               {reportOn("periodos_kpis") && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
-                <Stat label={t.salary} value={money(periodo.sueldo)} color="var(--green)" dimVar="var(--green-dim)" />
-                <Stat label={t.withdrawals} value={periodo.extras > 0 ? money(periodo.extras) : "—"} sub={t.fromSavings} color="var(--yellow)" dimVar="var(--yellow-dim)" />
-                <Stat label={t.spent} value={money(periodo.gastado)} sub={`${periodo.pct}%`} color={colorPct(periodo.pct)} danger={periodo.pct > 100} dimVar={periodo.pct > 90 ? "var(--red-dim)" : periodo.pct > 50 ? "var(--yellow-dim)" : "var(--green-dim)"} />
-                <Stat label={periodo.periodoId === periodos[0]?.periodoId ? t.available : t.remaining} value={money(periodo.disponible)} color={periodo.disponible >= 0 ? "var(--green)" : "var(--red)"} dimVar={periodo.disponible >= 0 ? "var(--green-dim)" : "var(--red-dim)"} />
-                <Stat label={t.projection} value={proyeccionGasto !== null ? money(proyeccionGasto) : "—"} sub={t.nextPeriod} color="var(--red)" dimVar="var(--red-dim)" />
-                <Stat label={t.prevPeriodRemaining} value={periodo.resto > 0 ? money(periodo.resto) : "—"} color={periodo.resto > 0 ? "var(--green)" : "var(--muted)"} dimVar={periodo.resto > 0 ? "var(--green-dim)" : undefined} />
+              <div className="soft" style={{ marginBottom: 12, background: "linear-gradient(135deg, var(--surface), var(--surface-alt))" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{t.periodAvgSpent}</div>
+                  <button onClick={toggle} aria-label={t.hideValues} style={{ background: "transparent", border: "none", color: oculto ? "var(--accent)" : "var(--muted)", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}><EyeIcon off={oculto} /></button>
+                </div>
+                <div style={{ fontSize: 30, fontWeight: 700, color: "var(--red)", fontFamily: "var(--font-mono)", letterSpacing: -0.5, lineHeight: 1 }}>{oculto ? "••" : money(promGastoPorPeriodo)}</div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>{t.periodsCount(periodos.length)}</div>
               </div>
               )}
 
@@ -788,10 +788,9 @@ export default function ReportesPage() {
                 const mejor = valid.length > 0 ? valid.reduce((b, s) => s.gastado / s.total < b.gastado / b.total ? s : b) : null;
                 const peor = valid.length > 0 ? valid.reduce((b, s) => s.gastado / s.total > b.gastado / b.total ? s : b) : null;
                 return (
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
-                    <Stat label={t.periodAvg} value={money(promGastoPorPeriodo)} sub={t.periodsCount(periodos.length)} color="var(--red)" dimVar="var(--red-dim)" />
-                    {mejor && <Stat label={t.bestPeriod} value={shortPer(mejor.periodoId)} sub={`${Math.round((mejor.gastado / mejor.total) * 100)}%`} color="var(--green)" dimVar="var(--green-dim)" />}
-                    {peor && <Stat label={t.worstPeriod} value={shortPer(peor.periodoId)} sub={`${Math.round((peor.gastado / peor.total) * 100)}%`} color="var(--red)" dimVar="var(--red-dim)" />}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                    {mejor && <MiniStat center basis="1 1 45%" label={t.bestPeriod} value={shortPer(mejor.periodoId)} sub={`${Math.round((mejor.gastado / mejor.total) * 100)}%`} color="var(--green)" />}
+                    {peor && <MiniStat center basis="1 1 45%" label={t.worstPeriod} value={shortPer(peor.periodoId)} sub={`${Math.round((peor.gastado / peor.total) * 100)}%`} color="var(--red)" />}
                   </div>
                 );
               })()}
