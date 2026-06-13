@@ -4,6 +4,13 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [1.27.1] — 2026-06-13
+
+### Mejoras
+- Iconos y logo de la app actualizados y más livianos.
+
+---
+
 ## [1.27.0] — 2026-06-13
 
 ### Mejoras

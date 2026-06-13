@@ -4,6 +4,14 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.27.1] — 2026-06-13
+
+### Changed
+- Regenerated/optimized app icons and logo (smaller files). Version bump refreshes the service-worker cache so devices pick up the new icons.
+- `.gitignore`: ignore local `/scripts/` (asset generators, not part of the app).
+
+---
+
 ## [1.27.0] — 2026-06-13
 
 ### Changed (Dashboard redesign)
