@@ -11,8 +11,8 @@ import { serieTendencia } from "@/utils/reportes";
 import { useMoney } from "@/hooks/useHideValues";
 import { useAppPrefs } from "@/hooks/useAppPrefs";
 import { Movimiento, TipoMovimiento } from "@/types";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EyeIcon } from "@/components/EyeIcon";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { EyeIcon } from "@/components/ui/EyeIcon";
 import { useT } from "@/hooks/useTranslation";
 
 // ── Íconos ────────────────────────────────────────────────────────────────────

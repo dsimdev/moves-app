@@ -8,9 +8,9 @@ import { useConfig } from "@/hooks/useConfig";
 import { useMoney } from "@/hooks/useHideValues";
 import { agruparPorPeriodo, fechaCorta } from "@/utils/periodo";
 import { serieTendencia } from "@/utils/reportes";
-import { EyeIcon } from "@/components/EyeIcon";
+import { EyeIcon } from "@/components/ui/EyeIcon";
 import { Movimiento } from "@/types";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { MiniStat } from "@/components/ui/MiniStat";
 import { useT } from "@/hooks/useTranslation";
 

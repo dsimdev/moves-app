@@ -19,8 +19,8 @@ import { useCotizacion } from "@/hooks/useCotizacion";
 import { useConfig } from "@/hooks/useConfig";
 import { useReportConfig } from "@/hooks/useReportConfig";
 import { useAppPrefs } from "@/hooks/useAppPrefs";
-import { EyeIcon } from "@/components/EyeIcon";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { EyeIcon } from "@/components/ui/EyeIcon";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { MiniStat } from "@/components/ui/MiniStat";
 
 type Sub = "gastos" | "ingresos" | "movimientos" | "periodos";

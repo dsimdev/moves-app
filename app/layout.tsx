@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { themeInitScript } from "@/lib/theme-init";
 import "./globals.css";
 

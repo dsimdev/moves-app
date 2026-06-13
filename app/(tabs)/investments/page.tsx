@@ -24,8 +24,8 @@ import { serieTendencia, periodosParaMetaUSD } from "@/utils/reportes";
 import { actualizarTipoCambio } from "@/services/firebase/config";
 import { useMoney, MASK } from "@/hooks/useHideValues";
 import { useAppPrefs } from "@/hooks/useAppPrefs";
-import { EyeIcon } from "@/components/EyeIcon";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { EyeIcon } from "@/components/ui/EyeIcon";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { MiniStat } from "@/components/ui/MiniStat";
 import { Movimiento } from "@/types";
 
