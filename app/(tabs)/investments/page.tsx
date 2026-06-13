@@ -20,7 +20,7 @@ function fechaCortaConAnio(fecha: string): string {
   return fecha;
 }
 import { agruparPorPeriodo } from "@/utils/periodo";
-import { serieTendencia, proyectarAhorros, periodosParaMetaUSD } from "@/utils/reportes";
+import { serieTendencia, periodosParaMetaUSD } from "@/utils/reportes";
 import { actualizarTipoCambio } from "@/services/firebase/config";
 import { useMoney, MASK } from "@/hooks/useHideValues";
 import { useAppPrefs } from "@/hooks/useAppPrefs";
@@ -47,7 +47,7 @@ function calcularReserva(movimientos: Movimiento[], moneda: "USD" | "EUR") {
 // Mini-stat compacta, mismo estilo que en Reportes.
 function MiniStat({ label, value, sub, color, center }: { label: string; value: string; sub?: string; color?: string; center?: boolean }) {
   return (
-    <div style={{ background: "var(--surface-alt)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "11px 12px", minWidth: 0, flex: "1 1 0", textAlign: center ? "center" : undefined }}>
+    <div style={{ background: "var(--surface-alt)", border: "none", borderRadius: "var(--radius-sm)", padding: "11px 12px", minWidth: 0, flex: "1 1 0", textAlign: center ? "center" : undefined }}>
       <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</div>
       <div style={{ fontSize: 15, fontWeight: 700, color: color ?? "var(--text)", fontFamily: "var(--font-mono)", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
       {sub && <div style={{ fontSize: 9, color: "var(--muted)", marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>}
@@ -118,10 +118,15 @@ export default function DolaresPage() {
   const serie = useMemo(() => serieTendencia(periodos), [periodos]);
   const cotizOficial = cotizacion?.oficial ?? null;
   const metaMonto = config?.meta.metaMonto ?? null;
-  const promAhorroUSD = cotizOficial && serie.length > 0
-    ? (serie.reduce((s, p) => s + Math.max(0, p.ahorros), 0) / serie.length) / cotizOficial : null;
+  // Ventana unificada: promedio de ahorro de los últimos 3 períodos (clamp ≥ 0).
+  const ultimos3 = serie.slice(-Math.min(3, serie.length));
+  const promAhorroARS = ultimos3.length > 0
+    ? ultimos3.reduce((s, p) => s + Math.max(0, p.ahorros), 0) / ultimos3.length : 0;
+  const promAhorroUSD = cotizOficial && serie.length > 0 ? promAhorroARS / cotizOficial : null;
   const periodosParaMeta = metaMonto && cotizOficial ? periodosParaMetaUSD(serie, metaMonto, cotizOficial) : null;
-  const proyUSD = cotizOficial && serie.length >= 2 ? proyectarAhorros(serie, 3) / cotizOficial : null;
+  // Proyección: acumulado actual + promedio (últimos 3) × 3 períodos.
+  const proyUSD = cotizOficial && serie.length >= 2
+    ? ((serie[serie.length - 1]?.ahorrosAcum ?? 0) + promAhorroARS * 3) / cotizOficial : null;
 
   return (
     <div className="page">
@@ -135,7 +140,7 @@ export default function DolaresPage() {
           </div>
           {/* ── SECCIÓN USD ── */}
           {showUSD && (<>
-          <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
+          <div className="card" style={{ background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <div style={{ fontSize: 11, color: "var(--muted)" }}>{t.usdReserve}</div>
               <button onClick={toggle} aria-label={t.hideValues} style={{
@@ -171,7 +176,7 @@ export default function DolaresPage() {
 
           {/* ── SECCIÓN EUR ── */}
           {showEUR && (<>
-          <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
+          <div className="card" style={{ background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <div style={{ fontSize: 11, color: "var(--muted)" }}>{t.eurReserve}</div>
               {!showUSD && (
@@ -214,7 +219,7 @@ export default function DolaresPage() {
             const metaAlcanzada = falta <= 0;
             const barColor = pctMeta >= 80 ? "var(--green)" : pctMeta >= 40 ? "var(--yellow)" : "var(--red)";
             return (
-              <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
+              <div className="card" style={{ background: "linear-gradient(135deg, var(--surface), var(--surface-alt))", marginBottom: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <div className="label" style={{ marginBottom: 0 }}>{t.savingsGoal}</div>
                   {config.meta.metaFecha && <div style={{ fontSize: 9, color: "var(--muted)" }}>{fechaCortaConAnio(config.meta.metaFecha)}</div>}
@@ -263,7 +268,7 @@ export default function DolaresPage() {
 
           {/* Historial USD */}
           {showUSD && historialUSD.length > 0 && (
-            <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)", marginBottom: 10 }}>
+            <div className="card" style={{ background: "linear-gradient(135deg, var(--surface), var(--surface-alt))", marginBottom: 10 }}>
               <div className="label">{t.usdHistory}</div>
               {historialUSD.map((m) => (
                 <div key={m.id} className="row">
@@ -284,7 +289,7 @@ export default function DolaresPage() {
 
           {/* Historial EUR */}
           {showEUR && historialEUR.length > 0 && (
-            <div className="card" style={{ borderColor: "var(--yellow)44", background: "linear-gradient(135deg, var(--surface) 0%, var(--yellow-dim) 100%)" }}>
+            <div className="card" style={{ background: "linear-gradient(135deg, var(--surface), var(--surface-alt))" }}>
               <div className="label">{t.eurHistory}</div>
               {historialEUR.map((m) => (
                 <div key={m.id} className="row">
