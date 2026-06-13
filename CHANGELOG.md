@@ -4,6 +4,16 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.23.0] — 2026-06-13
+
+### Changed
+- Reports → Income redesigned to hero + mini-stats (Salary still opens raise history; Savings projection keeps its 3/6/12p toggle).
+- Income: removed "By category", kept "By description" — now counting Salary and previous-period remainder (previously filtered).
+- Income "Direct to savings": shows last 5 with a "see more" modal.
+- Reports cards use a consistent subtle border (heros included).
+
+---
+
 ## [1.22.5] — 2026-06-12
 
 ### Changed

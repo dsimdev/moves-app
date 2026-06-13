@@ -72,9 +72,9 @@ function Stat({ label, value, sub, color, danger, dimVar }: { label: string; val
 }
 
 // Mini-stat compacto, fondo neutro, color sólo en el número.
-function MiniStat({ label, value, sub, color, basis = "1 1 28%", center }: { label: string; value: string; sub?: string; color?: string; basis?: string; center?: boolean }) {
+function MiniStat({ label, value, sub, color, basis = "1 1 28%", center, onClick }: { label: string; value: string; sub?: string; color?: string; basis?: string; center?: boolean; onClick?: () => void }) {
   return (
-    <div style={{ background: "var(--surface-alt)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "11px 12px", minWidth: 0, flex: basis, textAlign: center ? "center" : undefined }}>
+    <div onClick={onClick} style={{ background: "var(--surface-alt)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "11px 12px", minWidth: 0, flex: basis, textAlign: center ? "center" : undefined, cursor: onClick ? "pointer" : undefined }}>
       <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</div>
       <div style={{ fontSize: 15, fontWeight: 700, color: color ?? "var(--text)", fontFamily: "var(--font-mono)", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
       {sub && <div style={{ fontSize: 9, color: "var(--muted)", marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>}
@@ -122,6 +122,7 @@ export default function ReportesPage() {
   const [modalTopExpanded, setModalTopExpanded] = useState(false);
   const [modalSueldo, setModalSueldo] = useState(false);
   const [modalSueldoExpanded, setModalSueldoExpanded] = useState(false);
+  const [modalAhorros, setModalAhorros] = useState(false);
   const [diaModal, setDiaModal] = useState<string | null>(null);
   const [diaModalExpanded, setDiaModalExpanded] = useState(false);
   const sheetDragY = useRef<number | null>(null);
@@ -234,9 +235,9 @@ export default function ReportesPage() {
     if (!periodo) return [];
     const descMap = new Map<string, number>();
     for (const m of periodo.movimientos) {
-      // Incluye todos los ingresos reales (a disponible Y a ahorros directo)
-      if (m.tipo === "Ingreso" && m.categoria !== "RESTO" && m.categoria !== "Sueldo") {
-        const key = m.descripcion || m.categoria;
+      // Incluye todos los ingresos reales: Sueldo y RESTO (período anterior)
+      if (m.tipo === "Ingreso") {
+        const key = m.categoria === "RESTO" ? t.prevPeriodRemaining : (m.descripcion || m.categoria);
         descMap.set(key, (descMap.get(key) ?? 0) + m.monto);
       }
     }
@@ -630,7 +631,7 @@ export default function ReportesPage() {
               {/* Hero + KPIs */}
               {reportOn("ingresos_kpis") && (
               <>
-              <div className="soft" style={{ marginBottom: 12, background: "linear-gradient(135deg, var(--surface), var(--green-dim))", borderColor: "var(--green)33" }}>
+              <div className="soft" style={{ marginBottom: 12, background: "linear-gradient(135deg, var(--surface), var(--green-dim))" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <div style={{ fontSize: 12, color: "var(--muted)" }}>{t.availableIncome}</div>
                   <button onClick={toggle} aria-label={t.hideValues} style={{
@@ -650,62 +651,34 @@ export default function ReportesPage() {
                 )}
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+              {/* Mini-stats: Sueldo · Retiros */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
                 {evolSueldo ? (
-                  <div className="soft" onClick={suelHistorial.length > 0 ? () => setModalSueldo(true) : undefined} style={{ padding: 15, cursor: suelHistorial.length > 0 ? "pointer" : undefined, background: evolSueldo.esVacaciones ? "linear-gradient(135deg, var(--surface), var(--yellow-dim))" : "linear-gradient(135deg, var(--surface), var(--green-dim))", borderColor: evolSueldo.esVacaciones ? "var(--yellow)33" : "var(--green)33" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{t.salary}</div>
-                      {evolSueldo.esVacaciones && <span className="badge" style={{ background: "var(--yellow-dim)", color: "var(--yellow)", border: "1px solid var(--yellow)44", fontSize: 9 }}>{t.leave}</span>}
-                      {!evolSueldo.esVacaciones && evolSueldo.deltaPct !== null && (
-                        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", fontFamily: "var(--font-mono)" }}>{evolSueldo.deltaPct >= 0 ? "+" : ""}{evolSueldo.deltaPct}%</div>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 19, fontWeight: 700, color: "var(--green)", fontFamily: "var(--font-mono)", lineHeight: 1.05 }}>{money(evolSueldo.ultimo)}</div>
-                    {evolSueldo.anterior !== null && <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>Anterior: {money(evolSueldo.anterior)}</div>}
-                  </div>
+                  <MiniStat center basis="1 1 45%" label={t.salary}
+                    value={oculto ? "••" : abbr(evolSueldo.ultimo)}
+                    sub={evolSueldo.esVacaciones ? t.leave : evolSueldo.deltaPct !== null ? `${evolSueldo.deltaPct >= 0 ? "+" : ""}${evolSueldo.deltaPct}%` : undefined}
+                    color={evolSueldo.esVacaciones ? "var(--yellow)" : "var(--green)"}
+                    onClick={suelHistorial.length > 0 ? () => setModalSueldo(true) : undefined} />
                 ) : (
-                  <Stat label={t.salary} value={money(periodo.sueldo)} color="var(--green)" dimVar="var(--green-dim)" />
+                  <MiniStat center basis="1 1 45%" label={t.salary} value={oculto ? "••" : abbr(periodo.sueldo)} color="var(--green)" />
                 )}
-                {periodo.moveTotal > 0 && <Stat label={t.withdrawals} value={money(periodo.moveTotal)} sub={t.fromSavings} color="var(--yellow)" dimVar="var(--yellow-dim)" />}
+                {periodo.moveTotal > 0 && <MiniStat center basis="1 1 45%" label={t.withdrawals} value={oculto ? "••" : abbr(periodo.moveTotal)} sub={t.fromSavings} color="var(--yellow)" />}
               </div>
 
-              {/* Total ingresado */}
-              {reportOn("ingresos_kpis") && totalAhorradoDirecto > 0 && (
-                <div className="soft" style={{ marginBottom: 12, background: "linear-gradient(135deg, var(--surface), var(--green-dim))", borderColor: "var(--green)22" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div>
-                      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>{t.totalIncome}</div>
-                      <div style={{ fontSize: 26, fontWeight: 700, color: "var(--green)", fontFamily: "var(--font-mono)", letterSpacing: -0.5, lineHeight: 1 }}>
-                        {money(periodo.sueldo + totalAhorradoDirecto)}
-                      </div>
-                      <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 8 }}>
-                        {t.salaryPlusSavings}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 12 }}>
-                      <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 4 }}>{t.salary}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)" }}>{money(periodo.sueldo)}</div>
-                      <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 6, marginBottom: 4 }}>{t.toSavingsLabel}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--blue)", fontFamily: "var(--font-mono)" }}>{money(totalAhorradoDirecto)}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
-                <div className="soft" style={{ padding: 15, background: "linear-gradient(135deg, var(--surface), var(--blue-dim))", borderColor: "var(--blue)22" }}>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 7 }}>{t.accumSavings}</div>
-                  <div style={{ fontSize: 19, fontWeight: 700, color: "var(--blue)", fontFamily: "var(--font-mono)", lineHeight: 1.05 }}>
-                    {ahorrosAcumPeriodo > 0 ? money(ahorrosAcumPeriodo) : "—"}
-                  </div>
-                  {deltaAhorros !== null && (
-                    <div style={{ fontSize: 10, color: deltaAhorros >= 0 ? "var(--green)" : "var(--red)", marginTop: 4, fontFamily: "var(--font-mono)" }}>
-                      {deltaAhorros >= 0 ? "+" : ""}{money(deltaAhorros)}
-                      {deltaAhorrosPct !== null && <span style={{ fontFamily: "var(--font)" }}> ({deltaAhorrosPct >= 0 ? "+" : ""}{deltaAhorrosPct}% vs {shortPer(anterior!.periodoId)})</span>}
-                    </div>
-                  )}
-                </div>
+              {/* Mini-stats: Total ingresado · Ahorros acum. */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                {reportOn("ingresos_kpis") && totalAhorradoDirecto > 0 && (
+                  <MiniStat center basis="1 1 45%" label={t.totalIncome} value={oculto ? "••" : abbr(periodo.sueldo + totalAhorradoDirecto)} sub={t.toSavingsLabel + ": " + (oculto ? "••" : abbr(totalAhorradoDirecto))} color="var(--green)" />
+                )}
+                <MiniStat center basis="1 1 45%" label={t.accumSavings}
+                  value={ahorrosAcumPeriodo > 0 ? (oculto ? "••" : abbr(ahorrosAcumPeriodo)) : "—"}
+                  sub={deltaAhorros !== null ? `${deltaAhorros >= 0 ? "+" : ""}${oculto ? "••" : abbr(deltaAhorros)}${deltaAhorrosPct !== null ? ` (${deltaAhorrosPct >= 0 ? "+" : ""}${deltaAhorrosPct}%)` : ""}` : undefined}
+                  color="var(--blue)" />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, marginBottom: 12 }}>
                 {serie.length >= 2 && (
-                  <div className="soft" style={{ padding: 15, background: "linear-gradient(135deg, var(--surface), var(--blue-dim))", borderColor: "var(--blue)22" }}>
+                  <div className="soft" style={{ padding: 15, background: "linear-gradient(135deg, var(--surface), var(--surface-alt))" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <div style={{ fontSize: 11, color: "var(--muted)" }}>{t.savingsProjection}</div>
                       <div style={{ display: "flex", gap: 4 }}>
@@ -726,16 +699,6 @@ export default function ReportesPage() {
                 )}
               </div>
               </>
-              )}
-
-              {/* Por categoría */}
-              {reportOn("ingresos_otros") && ingXCat.length > 0 && (
-                <div className="soft" style={{ marginBottom: 12, background: "linear-gradient(135deg, var(--surface), var(--surface-alt))" }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{t.byCategory}</div>
-                  {ingXCat.map((c) => (
-                    <Bar key={c.cat} nombre={c.cat} monto={c.monto} pct={c.pct} color="var(--green)" oculto={oculto} />
-                  ))}
-                </div>
               )}
 
               {/* Por descripción */}
@@ -769,7 +732,7 @@ export default function ReportesPage() {
                       <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 2, textTransform: "uppercase", padding: "10px 0 4px", borderTop: movIngresos.length > 0 ? "1px solid var(--faint)" : "none", marginTop: movIngresos.length > 0 ? 4 : 0 }}>
                         {t.directToSavings}
                       </div>
-                      {movIngresosAhorros.map((m) => (
+                      {movIngresosAhorros.slice(0, 5).map((m) => (
                         <div key={m.id} className="row" style={{ padding: "9px 0" }}>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.descripcion || m.origenAhorro || m.categoria}</div>
@@ -780,6 +743,11 @@ export default function ReportesPage() {
                           </span>
                         </div>
                       ))}
+                      {movIngresosAhorros.length > 5 && (
+                        <button onClick={() => setModalAhorros(true)} style={{ display: "block", width: "100%", textAlign: "center", margin: "8px auto 0", background: "none", border: "none", color: "var(--muted)", fontSize: 12, fontStyle: "italic", cursor: "pointer" }}>
+                          {t.seeMore}
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
@@ -1021,6 +989,28 @@ export default function ReportesPage() {
                   </div>
                 </div>
                 <span style={{ fontSize: 18, fontWeight: 700, color: "var(--green)", fontFamily: "var(--font-mono)" }}>+{ev.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Todo lo directo a ahorros */}
+      {modalAhorros && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 200, display: "flex", alignItems: "flex-end", overflow: "hidden" }} onClick={() => setModalAhorros(false)}>
+          <div style={{ width: "100%", background: "var(--bg)", borderRadius: "20px 20px 0 0", maxHeight: "80dvh", overflowY: "auto", padding: "20px 20px 40px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--border)", margin: "0 auto 16px" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontSize: 16, fontWeight: 700 }}>{t.directToSavings}</span>
+              <button onClick={() => setModalAhorros(false)} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 22, padding: 4, lineHeight: 1 }}>×</button>
+            </div>
+            {movIngresosAhorros.map((m) => (
+              <div key={m.id} className="row" style={{ padding: "10px 0", borderBottom: "1px solid var(--faint)" }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.descripcion || m.origenAhorro || m.categoria}</div>
+                  <div style={{ fontSize: 10, color: "var(--muted)" }}>{sinAño(m.fecha)}</div>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--blue)", fontFamily: "var(--font-mono)", whiteSpace: "nowrap" }}>+{money(m.monto)}</span>
               </div>
             ))}
           </div>
