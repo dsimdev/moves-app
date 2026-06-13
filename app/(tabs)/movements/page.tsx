@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useAllMovimientos } from "@/hooks/useAllMovimientos";
+import { useData } from "../data-context";
 import { agruparPorPeriodo, fechaCorta } from "@/utils/periodo";
 import { useMoney } from "@/hooks/useHideValues";
 import { Movimiento, TipoMovimiento } from "@/types";
@@ -23,9 +22,8 @@ function TipoDot({ tipo, categoria }: { tipo: TipoMovimiento; categoria: string 
 }
 
 export default function MovimientosPage() {
-  const { user } = useAuth();
   const { oculto, toggle, m: money } = useMoney();
-  const { movimientos, loading, refresh } = useAllMovimientos(user?.uid);
+  const { movimientos, loading, refresh } = useData();
   const t = useT();
 
   const periodos = agruparPorPeriodo(movimientos);

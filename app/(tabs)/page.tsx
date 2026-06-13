@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
-import { useAllMovimientos } from "@/hooks/useAllMovimientos";
-import { useConfig } from "@/hooks/useConfig";
+import { useData } from "./data-context";
 import { useMoney } from "@/hooks/useHideValues";
 import { agruparPorPeriodo, fechaCorta } from "@/utils/periodo";
 import { serieTendencia } from "@/utils/reportes";
@@ -26,9 +24,7 @@ function TipoPrefix(m: Movimiento) {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const { movimientos, loading, refresh } = useAllMovimientos(user?.uid);
-  const { config } = useConfig(user?.uid);
+  const { movimientos, loading, refresh, config } = useData();
   const { oculto, toggle: toggleOculto, m: money } = useMoney();
   const t = useT();
 
