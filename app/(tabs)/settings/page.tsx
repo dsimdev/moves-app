@@ -17,6 +17,7 @@ import { formatTimestampAR, isoToFechaAR, sanitizeCell } from "@/lib/sheet-forma
 import { dbErrorMessage } from "@/lib/firebase-error";
 import { platformAuthenticatorAvailable, isBiometricEnabledFor, registerBiometric, clearBiometric } from "@/lib/biometric";
 import { pushSupported, isPushEnabled, enablePush, disablePush } from "@/lib/push-client";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useTheme } from "@/hooks/useTheme";
 import { useAppPrefs } from "@/hooks/useAppPrefs";
@@ -152,6 +153,7 @@ export default function ConfigPage() {
   const { overrides, saveAll: saveReportes } = useReportConfig();
   const router = useRouter();
 
+  const { canInstall, promptInstall } = useInstallPrompt();
   const { dark, toggle: toggleTheme } = useTheme();
   const { showReportes, showAhorros, monedaInversiones, monedaPrincipal, set: setPref, setMoneda, setMonedaPrincipal, lang, setLang } = useAppPrefs();
   const t = useT();
@@ -730,6 +732,21 @@ export default function ConfigPage() {
 
       {/* ── Acordeón unificado ── */}
       <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+
+          {/* Instalar app (si el navegador lo permite y no está instalada) */}
+          {canInstall && (
+            <button onClick={promptInstall} className="card" style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", border: "1px solid var(--accent)44", background: "linear-gradient(135deg, var(--surface), var(--accent-dim))", textAlign: "left", width: "100%" }}>
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--accent-dim)", border: "1px solid var(--accent)44", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--accent)" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--accent)" }}>{t.installApp}</div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{t.installAppSub}</div>
+              </div>
+            </button>
+          )}
 
           {/* ── Cuenta (incluye Sincronización) ── */}
           <div className="card">

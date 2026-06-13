@@ -4,6 +4,17 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [1.24.1] — 2026-06-13
+
+### Added
+- **Install app** button in Settings (uses `beforeinstallprompt`; shown only when installable and not already installed).
+- Manifest **shortcuts** (New movement · Reports · Investments), `display_override` and `prefer_related_applications`.
+
+### Notes
+- Manifest screenshots pending real captures.
+
+---
+
 ## [1.24.0] — 2026-06-13
 
 ### Added

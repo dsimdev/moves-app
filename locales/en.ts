@@ -165,6 +165,8 @@ export const en: AppLocale = {
 
   // Settings
   preferences: "Preferences",
+  installApp: "Install app",
+  installAppSub: "Add it to your home screen",
   sync: "Sync",
   syncErrorMsg: (at: string) => `Sync error: ${at}`,
   lastSyncMsg: (at: string) => `Last sync: ${at}`,

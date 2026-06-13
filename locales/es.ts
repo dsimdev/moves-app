@@ -163,6 +163,8 @@ export const es = {
 
   // Settings
   preferences: "Preferencias",
+  installApp: "Instalar app",
+  installAppSub: "Agregala a tu pantalla de inicio",
   sync: "Sincronización",
   syncErrorMsg: (at: string) => `Error de sync: ${at}`,
   lastSyncMsg: (at: string) => `Última sync: ${at}`,

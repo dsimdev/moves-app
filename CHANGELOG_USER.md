@@ -4,6 +4,14 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [1.24.1] — 2026-06-13
+
+### Novedades
+- **Instalá FinMoves como app**: nuevo botón en Configuración para instalarla en tu teléfono o compu (aparece solo si tu navegador lo permite y todavía no la instalaste).
+- **Accesos directos**: al mantener presionado el ícono de la app podés saltar directo a Nuevo movimiento, Reportes o Inversión.
+
+---
+
 ## [1.24.0] — 2026-06-13
 
 ### Novedades
