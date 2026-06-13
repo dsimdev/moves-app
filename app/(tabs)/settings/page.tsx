@@ -9,7 +9,7 @@ import { agruparPorPeriodo } from "@/utils/periodo";
 import { parsePeriodoId } from "@/utils/reportes";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db, auth } from "@/services/firebase/firebase";
-import { signOut, getIdToken, updatePassword } from "firebase/auth";
+import { signOut, getIdToken, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import type { ConfigUsuario } from "@/types";
 import { formatTimestampAR, isoToFechaAR, sanitizeCell } from "@/lib/sheet-format";
@@ -185,6 +185,7 @@ export default function ConfigPage() {
   // Modal de perfil de usuario
   const [showUserModal, setShowUserModal] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [currentPassInput, setCurrentPassInput] = useState("");
   const [passInput, setPassInput] = useState("");
   const [changingPass, setChangingPass] = useState(false);
   const [passVisible, setPassVisible] = useState(false);
@@ -193,6 +194,7 @@ export default function ConfigPage() {
   const openUserModal = () => {
     setNameInput(config?.meta.nombre ?? "");
     setPassInput("");
+    setCurrentPassInput("");
     setChangingPass(false);
     setPassVisible(false);
     setProfileMsg(null);
@@ -208,13 +210,26 @@ export default function ConfigPage() {
       }
       if (changingPass && passInput) {
         if (passInput.length < 6) { setProfileMsg({ ok: false, text: t.regWeakPassword }); return; }
+        if (!currentPassInput) { setProfileMsg({ ok: false, text: t.currentPasswordRequired }); return; }
         try {
+          // Reautenticar con la contraseña actual evita el error
+          // auth/requires-recent-login en sesiones de larga duración.
+          const cred = EmailAuthProvider.credential(auth.currentUser!.email!, currentPassInput);
+          await reauthenticateWithCredential(auth.currentUser!, cred);
           await updatePassword(auth.currentUser!, passInput);
         } catch (err) {
           const code = (err as { code?: string })?.code ?? "";
-          setProfileMsg({ ok: false, text: code === "auth/requires-recent-login" ? t.reauthNeeded : t.profileError });
+          const text = code === "auth/wrong-password" || code === "auth/invalid-credential"
+            ? t.wrongCurrentPassword
+            : code === "auth/requires-recent-login" ? t.reauthNeeded : t.profileError;
+          setProfileMsg({ ok: false, text });
           return;
         }
+        // Cambió la contraseña: cerramos sesión para que entre con la nueva.
+        setProfileMsg({ ok: true, text: t.passwordChangedRelogin });
+        setPassInput(""); setCurrentPassInput("");
+        setTimeout(async () => { await signOut(auth); router.push("/login"); }, 1400);
+        return;
       }
       setProfileMsg({ ok: true, text: t.profileSaved });
       setPassInput("");
@@ -285,14 +300,6 @@ export default function ConfigPage() {
     } finally {
       setPushBusy(false);
     }
-  };
-  const testPush = async () => {
-    const u = auth.currentUser;
-    if (!u) return;
-    try {
-      const token = await getIdToken(u);
-      await fetch("/api/push-test", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
-    } catch { /* ignore */ }
   };
   // Códigos de invitación (solo dueño)
   const isOwner = !!user?.email && user.email === process.env.NEXT_PUBLIC_OWNER_EMAIL;
@@ -850,9 +857,6 @@ export default function ConfigPage() {
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                  {pushOn && (
-                    <button onClick={testPush} style={{ background: "var(--surface-alt)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--muted)", fontSize: 11, fontWeight: 700, padding: "5px 10px", cursor: "pointer" }}>{t.testNotification}</button>
-                  )}
                   <Toggle activo={pushOn} onClick={togglePush} />
                 </div>
               </div>
@@ -1602,11 +1606,12 @@ export default function ConfigPage() {
               ) : (
                 <div style={{ padding: "14px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface-alt)" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <div className="label" style={{ margin: 0 }}>{t.newPasswordLabel}</div>
-                    <button onClick={() => { setChangingPass(false); setPassInput(""); setPassVisible(false); }} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 12, cursor: "pointer", padding: 0 }}>{t.cancel}</button>
+                    <div className="label" style={{ margin: 0 }}>{t.changePassword}</div>
+                    <button onClick={() => { setChangingPass(false); setPassInput(""); setCurrentPassInput(""); setPassVisible(false); }} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 12, cursor: "pointer", padding: 0 }}>{t.cancel}</button>
                   </div>
+                  <input type="password" value={currentPassInput} onChange={(e) => setCurrentPassInput(e.target.value)} className="input" style={{ width: "100%", marginBottom: 8 }} placeholder={t.currentPasswordPlaceholder} autoComplete="current-password" autoFocus />
                   <div style={{ position: "relative" }}>
-                    <input type={passVisible ? "text" : "password"} value={passInput} onChange={(e) => setPassInput(e.target.value)} className="input" style={{ width: "100%", paddingRight: 40 }} placeholder={t.newPasswordPlaceholder} autoComplete="new-password" autoFocus />
+                    <input type={passVisible ? "text" : "password"} value={passInput} onChange={(e) => setPassInput(e.target.value)} className="input" style={{ width: "100%", paddingRight: 40 }} placeholder={t.newPasswordPlaceholder} autoComplete="new-password" />
                     <button onClick={() => setPassVisible(v => !v)} aria-label={passVisible ? t.hide : t.show} style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: "var(--muted)", display: "flex" }}>
                       {passVisible
                         ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>

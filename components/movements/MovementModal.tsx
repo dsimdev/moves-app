@@ -100,6 +100,7 @@ export function MovementModal({ open, mode, movimiento, movimientos, activePerio
   const [montoARSInput, setMontoARSInput] = useState("");
   const [modoCarga, setModoCarga] = useState<"USD" | "ARS">("USD");
   const [cotizManual, setCotizManual] = useState("");
+  const [abreNuevoPeriodo, setAbreNuevoPeriodo] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState("");
 
@@ -113,7 +114,7 @@ export function MovementModal({ open, mode, movimiento, movimientos, activePerio
   const resetAdd = () => {
     setDescripcion(""); setMonto(""); setCategoria(""); setOrigenAhorro("");
     setCantidadUSD(""); setCotizManual(""); setObservaciones(""); setAddError("");
-    setMontoARSInput(""); setModoCarga("USD"); setFecha(hoyISO());
+    setMontoARSInput(""); setModoCarga("USD"); setFecha(hoyISO()); setAbreNuevoPeriodo(false);
   };
 
   // Inicializar al abrir según el modo.
@@ -170,7 +171,13 @@ export function MovementModal({ open, mode, movimiento, movimientos, activePerio
     return d && m && y ? `${parseInt(d)}/${parseInt(m)}/${y}` : f;
   };
 
-  const canSubmit = (!!periodoActual || (sinPeriodos && esSueldo)) && (
+  // El dueño cobra sueldo mensual: su sueldo SIEMPRE abre período (sin elección),
+  // igual que el primer sueldo. El resto de los usuarios eligen con el toggle.
+  const isOwner = !!user?.email && user.email === process.env.NEXT_PUBLIC_OWNER_EMAIL;
+  const forzarNuevoPeriodo = esSueldo && (sinPeriodos || isOwner);
+  const abrePeriodo = esSueldo && (forzarNuevoPeriodo || abreNuevoPeriodo);
+
+  const canSubmit = (!!periodoActual || abrePeriodo) && (
     esGastoFX ? usdFinal > 0 :
     esCompraFX ? usdFinal > 0 && arsCompraUSD > 0 :
     esMove ? true :
@@ -195,7 +202,7 @@ export function MovementModal({ open, mode, movimiento, movimientos, activePerio
       const montoFinal = esCompraFX ? arsCompraUSD : esGastoFX ? 0 : parseFloat(monto);
       if (!esGastoFX && (!montoFinal || montoFinal <= 0)) throw new Error(t.errInvalidAmount);
       if (esUSD && (!usdFinal || usdFinal <= 0)) throw new Error(t.errInvalidFX(fxLabel));
-      const periodoIdFinal = periodoActual?.periodoId ?? (sinPeriodos && esSueldo ? fechaAPeriodoId(fecha) : null);
+      const periodoIdFinal = abrePeriodo ? fechaAPeriodoId(fecha) : (periodoActual?.periodoId ?? null);
       if (!periodoIdFinal) throw new Error(t.errNoActivePeriod);
       await crearMovimiento(user.uid, {
         timestampCarga: new Date(), fecha, tipo,
@@ -208,6 +215,17 @@ export function MovementModal({ open, mode, movimiento, movimientos, activePerio
         ...(esCompraFX ? { cantidadUSD: usdFinal, cotizacion: cotizActual } : {}),
         ...(esGastoFX ? { cantidadUSD: usdFinal } : {}),
       });
+      // Cierre del período anterior: si este sueldo abre uno nuevo, el disponible
+      // que sobró se traslada como RESTO (= ahorro) al período nuevo.
+      if (abrePeriodo && !sinPeriodos && periodoActual && periodoActual.disponible > 0) {
+        await crearMovimiento(user.uid, {
+          timestampCarga: new Date(), fecha, tipo: "Ingreso",
+          categoria: "RESTO", descripcion: "Resto período anterior",
+          monto: periodoActual.disponible,
+          medioPago: "—", observaciones: `de ${periodoActual.periodoId}`,
+          periodoId: periodoIdFinal, userId: user.uid,
+        });
+      }
       const autoAhorroMedios = config?.meta.autoAhorro?.mediosPago;
       const autoAhorroOmitir = config?.meta.autoAhorro?.omitirDescripciones ?? [];
       if (tipo === "Gasto" && config?.meta.autoAhorro?.activo && (config.meta.autoAhorro.monto ?? 0) > 0 &&
@@ -233,8 +251,8 @@ export function MovementModal({ open, mode, movimiento, movimientos, activePerio
     if (!user?.uid || !movimiento) return;
     setEditLoading(true);
     try {
-      const update: Partial<Movimiento> = { monto: parseFloat(eMonto), observaciones: eObs };
-      if (!isLocked) { update.descripcion = eDesc.trim(); update.medioPago = eMedio; }
+      const update: Partial<Movimiento> = { monto: parseFloat(eMonto), observaciones: eObs, descripcion: eDesc.trim() };
+      if (!isLocked) update.medioPago = eMedio;
       await actualizarMovimiento(user.uid, movimiento.id, update);
       onChanged(); onClose();
     } catch (err) { console.error(err); }
@@ -272,11 +290,6 @@ export function MovementModal({ open, mode, movimiento, movimientos, activePerio
             </div>
           </div>
 
-          {esSueldo && (
-            <div style={{ background: "var(--yellow-dim)", border: "1px solid var(--yellow)44", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 16, fontSize: 12, color: "var(--yellow)", lineHeight: 1.7 }}>
-              {sinPeriodos ? t.salaryOpensFirstPeriod : t.salaryOpensPeriod}
-            </div>
-          )}
           {esMove && (
             <div style={{ background: "var(--yellow-dim)", border: "1px solid var(--yellow)44", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 16, fontSize: 12, color: "var(--yellow)" }}>
               {t.moveFromSavings}
@@ -296,6 +309,31 @@ export function MovementModal({ open, mode, movimiento, movimientos, activePerio
                       color: categoria === c.nombre ? tipoColor : "var(--muted)",
                     }}>{c.nombre}</button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sueldo: dónde se imputa el período. El dueño y el primer sueldo
+              siempre abren período (solo aviso). El resto elige con el toggle. */}
+          {esSueldo && (sinPeriodos || isOwner) && (
+            <div style={{ background: "var(--green-dim)", border: "1px solid var(--green)44", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 16, fontSize: 12, color: "var(--green)", lineHeight: 1.7 }}>
+              {sinPeriodos ? t.salaryOpensFirstPeriod : t.salaryOpensPeriod}
+            </div>
+          )}
+          {esSueldo && !sinPeriodos && !isOwner && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                {([false, true] as const).map((nuevo) => (
+                  <button key={String(nuevo)} type="button" onClick={() => setAbreNuevoPeriodo(nuevo)} className="pill" style={{
+                    flex: 1,
+                    borderColor: abreNuevoPeriodo === nuevo ? "var(--green)" : "var(--border)",
+                    background: abreNuevoPeriodo === nuevo ? "var(--green-dim)" : "transparent",
+                    color: abreNuevoPeriodo === nuevo ? "var(--green)" : "var(--muted)",
+                  }}>{nuevo ? t.periodNew : t.periodCurrent}</button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--muted)", paddingLeft: 2 }}>
+                {abreNuevoPeriodo ? t.salaryOpensPeriod : t.salaryToCurrentPeriod}
               </div>
             </div>
           )}
@@ -383,7 +421,7 @@ export function MovementModal({ open, mode, movimiento, movimientos, activePerio
             </div>
           )}
 
-          {!esMove && !esUSD && !esAhorros && !esSueldo && (
+          {!esMove && !esUSD && !esAhorros && (
             <div style={{ marginBottom: 14 }}>
               <div className="label">{t.description}</div>
               <input className="input" type="text" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
@@ -465,34 +503,28 @@ export function MovementModal({ open, mode, movimiento, movimientos, activePerio
             ))}
           </div>
 
+          {/* Descripción y monto siempre editables (también en Sueldo). */}
+          <div style={{ marginBottom: 14 }}>
+            <div className="label">{t.description}</div>
+            <input className="input" value={eDesc} onChange={(e) => setEDesc(e.target.value)} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <div className="label">{t.amount}</div>
+            <input className="input" style={{ fontFamily: "var(--font-mono)" }} type="number" value={eMonto} onChange={(e) => setEMonto(e.target.value)} />
+          </div>
+          {/* Medio de pago: no aplica al Sueldo (ancla del período). */}
           {!isLocked && (
-            <>
-              <div style={{ marginBottom: 14 }}>
-                <div className="label">{t.description}</div>
-                <input className="input" value={eDesc} onChange={(e) => setEDesc(e.target.value)} />
-              </div>
-              <div style={{ marginBottom: 14 }}>
-                <div className="label">{t.amount}</div>
-                <input className="input" style={{ fontFamily: "var(--font-mono)" }} type="number" value={eMonto} onChange={(e) => setEMonto(e.target.value)} />
-              </div>
-              <div style={{ marginBottom: 14 }}>
-                <div className="label">{t.paymentMethod}</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {["Mercado Pago", "Débito", "Efectivo"].map((m) => (
-                    <button key={m} type="button" onClick={() => setEMedio(m)} className="pill" style={{
-                      borderColor: eMedio === m ? "var(--accent)" : "var(--border)",
-                      background: eMedio === m ? "var(--accent-dim)" : "transparent",
-                      color: eMedio === m ? "var(--accent)" : "var(--muted)",
-                    }}>{m}</button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-          {isLocked && (
             <div style={{ marginBottom: 14 }}>
-              <div className="label">{t.amount}</div>
-              <input className="input" style={{ fontFamily: "var(--font-mono)" }} type="number" value={eMonto} onChange={(e) => setEMonto(e.target.value)} />
+              <div className="label">{t.paymentMethod}</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {["Mercado Pago", "Débito", "Efectivo"].map((m) => (
+                  <button key={m} type="button" onClick={() => setEMedio(m)} className="pill" style={{
+                    borderColor: eMedio === m ? "var(--accent)" : "var(--border)",
+                    background: eMedio === m ? "var(--accent-dim)" : "transparent",
+                    color: eMedio === m ? "var(--accent)" : "var(--muted)",
+                  }}>{m}</button>
+                ))}
+              </div>
             </div>
           )}
           <div style={{ marginBottom: 24 }}>

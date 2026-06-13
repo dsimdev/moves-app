@@ -4,6 +4,19 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [2.1.0] — 2026-06-13
+
+### Novedades
+- **Sueldo con ingresos variables**: al cargar el sueldo ahora podés elegir entre **"Sumar al actual"** o **"Nuevo período"**. Ideal si cobrás por día o de forma irregular: vas sumando durante el ciclo y decidís cuándo arranca el período nuevo.
+- Cuando un sueldo **abre un período nuevo**, lo que te sobró del anterior pasa solo a **Ahorros**.
+- Ahora podés **editar la descripción** de un sueldo cargado.
+
+### Mejoras
+- **Cambiar contraseña** más seguro: te pide tu **contraseña actual** para confirmar y, al cambiarla, cierra la sesión para que entres con la nueva.
+- El botón flotante **+** ahora se oculta mientras deslizás la lista y reaparece al soltar, así no te tapa los movimientos.
+
+---
+
 ## [2.0.0] — 2026-06-13
 
 ¡Llegamos a la **versión 2.0**! 🎉 Un hito que junta todo lo último: crear y editar movimientos desde Inicio, contador en el ícono de la app, Reportes e Inversión renovados, notificaciones nuevas (metas de ahorro y recordatorio de sueldo), idioma completo ES/EN y una app más rápida. Por dentro también se mudó a una base más sólida. Nada cambia en cómo la usás: todo sigue donde estaba, mejor.

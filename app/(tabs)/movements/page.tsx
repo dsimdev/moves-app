@@ -50,25 +50,21 @@ export default function MovimientosPage() {
     window.history.replaceState(null, "", "/movements");
   }, [loading, movimientos]);
 
-  // Fade del botón flotante: visible al cargar, desaparece tras inactividad.
+  // Fade del botón flotante: se oculta mientras se navega (scroll) y reaparece
+  // al detenerse, para no tapar la lista mientras la recorrés.
   const [btnVisible, setBtnVisible] = useState(true);
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    const show = () => {
-      setBtnVisible(true);
+    const hideThenShow = () => {
+      setBtnVisible(false);
       if (scrollTimer.current) clearTimeout(scrollTimer.current);
-      scrollTimer.current = setTimeout(() => setBtnVisible(false), 1000);
+      scrollTimer.current = setTimeout(() => setBtnVisible(true), 700);
     };
-    scrollTimer.current = setTimeout(() => setBtnVisible(false), 2000);
-    document.addEventListener("scroll", show, { passive: true });
-    document.addEventListener("touchstart", show, { passive: true });
-    document.addEventListener("touchmove", show, { passive: true });
-    document.addEventListener("click", show);
+    document.addEventListener("scroll", hideThenShow, { passive: true });
+    document.addEventListener("touchmove", hideThenShow, { passive: true });
     return () => {
-      document.removeEventListener("scroll", show);
-      document.removeEventListener("touchstart", show);
-      document.removeEventListener("touchmove", show);
-      document.removeEventListener("click", show);
+      document.removeEventListener("scroll", hideThenShow);
+      document.removeEventListener("touchmove", hideThenShow);
       if (scrollTimer.current) clearTimeout(scrollTimer.current);
     };
   }, []);

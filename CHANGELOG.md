@@ -4,6 +4,22 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [2.1.0] — 2026-06-13
+
+### Added
+- **Salary period control**: when adding a salary income, non-owner users get a **"Add to current / New period"** toggle. The owner and the first-ever salary always open a period (no choice). Lets daily/variable earners (e.g. a photographer) log income throughout a cycle and decide when a new period starts.
+- **Period close + carryover**: opening a new period now moves the previous period's **leftover available** into the new one as a `RESTO` movement (counts as Savings) — implements the close/carryover that was previously only done by the obsolete Google Form.
+- **Editable description on salary movements** (add + edit). Delete stays locked for salaries (they anchor the period).
+
+### Changed
+- **Password change** now **reauthenticates** with the current password (new "current password" field), fixing `auth/requires-recent-login`. On success it signs the user out and redirects to login to sign in with the new password.
+- Movements floating **+** button visibility **inverted**: hides while scrolling, reappears when idle (no longer covers the list).
+
+### Removed
+- **Test notification** button and the `/api/push-test` endpoint.
+
+---
+
 ## [2.0.0] — 2026-06-13
 
 Milestone release marking the move to **Firebase** as the single home for the app
