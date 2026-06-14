@@ -4,6 +4,13 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [2.4.2] — 2026-06-14
+
+### Correcciones
+- Al cargar un gasto, el aviso de auto-ahorro ya no aparece si la descripción es una de las que excluís — la pantalla queda más limpia.
+
+---
+
 ## [2.4.1] — 2026-06-14
 
 ### Mejoras

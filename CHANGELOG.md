@@ -4,6 +4,13 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [2.4.2] — 2026-06-14
+
+### Fixed
+- The auto-savings hint ("+$X to savings") in the new-expense form now respects the **skip-descriptions** list: if the typed description is one that auto-savings ignores, the hint no longer shows (matches the actual behavior, cleaner form).
+
+---
+
 ## [2.4.1] — 2026-06-14
 
 ### Performance (service worker)
