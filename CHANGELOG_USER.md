@@ -4,6 +4,13 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [2.4.1] — 2026-06-14
+
+### Mejoras
+- La app carga más rápido y consume menos datos: cachea mejor los archivos que no cambian.
+
+---
+
 ## [2.4.0] — 2026-06-14
 
 ### Novedades

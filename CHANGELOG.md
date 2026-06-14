@@ -4,6 +4,13 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [2.4.1] — 2026-06-14
+
+### Performance (service worker)
+- Immutable `/_next/static/` assets are now served **cache-first** (they're content-hashed, so they never change) instead of stale-while-revalidate — removes redundant background re-fetches on every load, cutting non-cached CDN requests.
+
+---
+
 ## [2.4.0] — 2026-06-14
 
 ### Added

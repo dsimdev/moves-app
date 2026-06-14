@@ -77,6 +77,18 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api")) return;
   if (url.pathname === "/sw.js") return;
 
+  // Assets inmutables (hash en el nombre) → cache-first, sin revalidar.
+  if (url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(
+      caches.match(req).then((cached) => cached || fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy));
+        return res;
+      }))
+    );
+    return;
+  }
+
   if (req.mode === "navigate") {
     event.respondWith(
       (async () => {
