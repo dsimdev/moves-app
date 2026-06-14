@@ -4,6 +4,14 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [2.5.0] — 2026-06-14
+
+### Added
+- **Receipt attachments**: attach **one image per movement** (add & edit) stored in **Cloud Storage** under `users/{uid}/comprobantes/`. Thumbnail with open/replace/remove; the file is deleted when the movement is deleted. New `comprobanteUrl`/`comprobantePath` fields. Feature-gated to the owner for now (`canComprobante`), trivially extendable to a premium tier later.
+- `storage.rules` added (per-user isolation, images only, ≤10 MB). Firebase Storage must be enabled and the rules published in the console.
+
+---
+
 ## [2.4.2] — 2026-06-14
 
 ### Fixed

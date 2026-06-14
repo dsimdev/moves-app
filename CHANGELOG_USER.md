@@ -4,6 +4,13 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [2.5.0] — 2026-06-14
+
+### Novedades
+- **Comprobantes**: ahora podés adjuntar una **foto** a cada movimiento (al crearlo o editarlo), verla, reemplazarla o quitarla. Se guarda de forma segura y privada.
+
+---
+
 ## [2.4.2] — 2026-06-14
 
 ### Correcciones
