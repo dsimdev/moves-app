@@ -4,6 +4,13 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [2.3.1] — 2026-06-13
+
+### Mejoras
+- Mejoras internas (métricas de uso anónimas para seguir mejorando la app).
+
+---
+
 ## [2.3.0] — 2026-06-13
 
 ### Mejoras

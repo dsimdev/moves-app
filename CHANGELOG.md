@@ -4,6 +4,14 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [2.3.1] — 2026-06-13
+
+### Added
+- **Firebase Analytics** (GA4) initialized client-side only, guarded by `isSupported()` (`lib/analytics.ts` + `FirebaseAnalytics` component). `measurementId` added to the Firebase config (public, with literal fallback so it works without a new secret).
+- CSP `script-src` now allows `https://www.googletagmanager.com` (gtag loader).
+
+---
+
 ## [2.3.0] — 2026-06-13
 
 ### Changed (onboarding)

@@ -7,7 +7,7 @@ import { version } from "./package.json";
 // connect-src https:/wss: deja pasar Firebase/Google/APIs sin enumerarlos uno a uno.
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
