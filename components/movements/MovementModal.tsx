@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useConfig } from "@/hooks/useConfig";
 import { useCotizacion } from "@/hooks/useCotizacion";
 import { useAppPrefs } from "@/hooks/useAppPrefs";
 import { useMoney } from "@/hooks/useHideValues";
@@ -10,7 +9,7 @@ import { useT } from "@/hooks/useTranslation";
 import { crearMovimiento, actualizarMovimiento, eliminarMovimiento } from "@/services/firebase/movimientos";
 import { agruparPorPeriodo, formatARS, fechaCorta } from "@/utils/periodo";
 import { serieTendencia } from "@/utils/reportes";
-import { Movimiento, TipoMovimiento } from "@/types";
+import { Movimiento, TipoMovimiento, ConfigUsuario } from "@/types";
 
 const TrashIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -49,6 +48,8 @@ interface MovementModalProps {
   movimiento?: Movimiento | null;
   /** Movimientos del usuario (para derivar períodos/serie). */
   movimientos: Movimiento[];
+  /** Config del usuario (provista por el padre desde DataProvider, sin re-leer). */
+  config: ConfigUsuario | null;
   /** Período al que se carga el alta. Por defecto, el más reciente. */
   activePeriodoId?: string;
   onClose: () => void;
@@ -57,9 +58,8 @@ interface MovementModalProps {
 }
 
 // Modal de alta/edición/borrado de movimientos, reutilizable (Movimientos, Inicio).
-export function MovementModal({ open, mode, movimiento, movimientos, activePeriodoId, onClose, onChanged }: MovementModalProps) {
+export function MovementModal({ open, mode, movimiento, movimientos, config, activePeriodoId, onClose, onChanged }: MovementModalProps) {
   const { user } = useAuth();
-  const { config } = useConfig(user?.uid);
   const { cotizacion } = useCotizacion();
   const { monedaInversiones, monedaPrincipal } = useAppPrefs();
   const { m: money } = useMoney();

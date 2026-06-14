@@ -16,9 +16,18 @@ export async function POST(req: NextRequest) {
   if (!email || !password || !code) return NextResponse.json({ error: "missing-fields" }, { status: 400 });
   if (password.length < 6) return NextResponse.json({ error: "weak-password" }, { status: 400 });
 
-  const codeRef = adminDb().doc(`inviteCodes/${code}`);
-  const codeSnap = await codeRef.get();
-  if (!codeSnap.exists || codeSnap.data()?.used) {
+  const db = adminDb();
+  const codeRef = db.doc(`inviteCodes/${code}`);
+
+  // Reservar el código de forma atómica: si dos requests usan el mismo código en
+  // paralelo, solo uno gana la transacción; el otro ve `used` y aborta.
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(codeRef);
+      if (!snap.exists || snap.data()?.used) throw new Error("invalid-code");
+      tx.update(codeRef, { used: true, reservedAt: Timestamp.now() });
+    });
+  } catch {
     return NextResponse.json({ error: "invalid-code" }, { status: 403 });
   }
 
@@ -27,14 +36,16 @@ export async function POST(req: NextRequest) {
     const user = await adminAuth().createUser({ email, password });
     uid = user.uid;
   } catch (err) {
+    // No se pudo crear la cuenta → liberar el código para que no se desperdicie.
+    await codeRef.set({ used: false, reservedAt: null }, { merge: true }).catch(() => {});
     const code = (err as { code?: string })?.code ?? "";
     if (code === "auth/email-already-exists") return NextResponse.json({ error: "email-in-use" }, { status: 409 });
     if (code === "auth/invalid-email") return NextResponse.json({ error: "invalid-email" }, { status: 400 });
     return NextResponse.json({ error: "create-failed" }, { status: 400 });
   }
 
-  // Config inicial + marcar el código como usado (atómico-ish: la cuenta ya existe).
-  await adminDb().doc(`users/${uid}/config/meta`).set(TEMPLATE_CONFIG);
+  // Config inicial + dejar registrado quién usó el código.
+  await db.doc(`users/${uid}/config/meta`).set(TEMPLATE_CONFIG);
   await codeRef.set({ used: true, usedBy: uid, usedAt: Timestamp.now() }, { merge: true });
 
   return NextResponse.json({ ok: true });

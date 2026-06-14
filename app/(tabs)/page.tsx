@@ -179,6 +179,7 @@ export default function Dashboard() {
         mode={modalState?.mode ?? "add"}
         movimiento={modalState?.mov ?? null}
         movimientos={movimientos}
+        config={config}
         activePeriodoId={p?.periodoId}
         onClose={() => setModalState(null)}
         onChanged={refresh}

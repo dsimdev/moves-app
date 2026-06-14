@@ -4,6 +4,13 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [2.1.1] — 2026-06-13
+
+### Mejoras
+- Ajustes de **velocidad** (menos lecturas a la base) y de **seguridad** del sitio. Sin cambios en el uso diario.
+
+---
+
 ## [2.1.0] — 2026-06-13
 
 ### Novedades

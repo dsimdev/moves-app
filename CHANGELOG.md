@@ -4,6 +4,17 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [2.1.1] — 2026-06-13
+
+### Performance
+- `MovementModal` no longer fetches `config/meta` on its own — it receives `config` as a prop from the shared `DataProvider`. Removes a duplicate Firestore read on every visit to Home and Movements.
+
+### Security
+- **Content-Security-Policy** header added (production only): locks down `object-src`, `base-uri`, `form-action`, `frame-ancestors`, restricts `frame-src`/`connect-src`. `script-src`/`style-src` keep `'unsafe-inline'` (required by Next/React inline scripts and `style={{}}`).
+- **Invite-code registration is now atomic**: the code is reserved inside a Firestore transaction before creating the account, preventing a parallel-request race that could reuse one code twice. The code is released if account creation fails.
+
+---
+
 ## [2.1.0] — 2026-06-13
 
 ### Added
