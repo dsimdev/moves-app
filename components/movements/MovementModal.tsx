@@ -7,6 +7,7 @@ import { useAppPrefs } from "@/hooks/useAppPrefs";
 import { useMoney } from "@/hooks/useHideValues";
 import { useT } from "@/hooks/useTranslation";
 import { crearMovimiento, actualizarMovimiento, eliminarMovimiento } from "@/services/firebase/movimientos";
+import { uploadComprobante, deleteComprobante } from "@/lib/storage";
 import { agruparPorPeriodo, formatARS, fechaCorta } from "@/utils/periodo";
 import { serieTendencia } from "@/utils/reportes";
 import { Movimiento, TipoMovimiento, ConfigUsuario } from "@/types";
@@ -102,6 +103,10 @@ export function MovementModal({ open, mode, movimiento, movimientos, config, act
   const [cotizManual, setCotizManual] = useState("");
   const [abreNuevoPeriodo, setAbreNuevoPeriodo] = useState(false);
   const [moveDir, setMoveDir] = useState<"aDisponible" | "aAhorro">("aDisponible");
+  // Comprobante adjunto (alta y edición).
+  const [comprobanteFile, setComprobanteFile] = useState<File | null>(null);
+  const [comprobantePreview, setComprobantePreview] = useState<string | null>(null);
+  const [comprobanteRemoved, setComprobanteRemoved] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState("");
 
@@ -112,10 +117,30 @@ export function MovementModal({ open, mode, movimiento, movimientos, config, act
   const [eObs, setEObs] = useState("");
   const [editLoading, setEditLoading] = useState(false);
 
+  const resetComprobante = () => {
+    setComprobantePreview((p) => { if (p) URL.revokeObjectURL(p); return null; });
+    setComprobanteFile(null); setComprobanteRemoved(false);
+  };
+
   const resetAdd = () => {
     setDescripcion(""); setMonto(""); setCategoria(""); setOrigenAhorro("");
     setCantidadUSD(""); setCotizManual(""); setObservaciones(""); setAddError("");
     setMontoARSInput(""); setModoCarga("USD"); setFecha(hoyISO()); setAbreNuevoPeriodo(false); setMoveDir("aDisponible");
+    resetComprobante();
+  };
+
+  const onComprobanteSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (comprobantePreview) URL.revokeObjectURL(comprobantePreview);
+    setComprobanteFile(f);
+    setComprobantePreview(URL.createObjectURL(f));
+    setComprobanteRemoved(false);
+  };
+
+  const clearComprobante = () => {
+    if (comprobantePreview) URL.revokeObjectURL(comprobantePreview);
+    setComprobanteFile(null); setComprobantePreview(null); setComprobanteRemoved(true);
   };
 
   // Inicializar al abrir según el modo.
@@ -131,6 +156,7 @@ export function MovementModal({ open, mode, movimiento, movimientos, config, act
       setEDesc(movimiento.descripcion || (movimiento as Movimiento & { origenAhorro?: string }).origenAhorro || "");
       setEMedio(movimiento.medioPago ?? "");
       setEObs(movimiento.observaciones ?? "");
+      resetComprobante();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode, movimiento?.id]);
@@ -189,11 +215,14 @@ export function MovementModal({ open, mode, movimiento, movimientos, config, act
   // Un sueldo que ABRE período (su fecha define el periodoId) es el ancla → no se
   // puede borrar. Un sueldo "sumado" al período en curso sí es borrable.
   const esAperturaPeriodo = isLocked && !!movimiento && fechaAPeriodoId(movimiento.fecha) === movimiento.periodoId;
+  // Quién puede adjuntar comprobantes. Hoy solo el dueño; a futuro: isOwner || isPremium.
+  const canComprobante = isOwner;
   const isDirtyEdit = !!movimiento && (
     eMonto !== String(movimiento.monto) ||
     eDesc !== (movimiento.descripcion ?? "") ||
     eMedio !== (movimiento.medioPago ?? "") ||
-    eObs !== (movimiento.observaciones ?? "")
+    eObs !== (movimiento.observaciones ?? "") ||
+    !!comprobanteFile || comprobanteRemoved
   );
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -208,6 +237,8 @@ export function MovementModal({ open, mode, movimiento, movimientos, config, act
       if (esUSD && (!usdFinal || usdFinal <= 0)) throw new Error(t.errInvalidFX(fxLabel));
       const periodoIdFinal = abrePeriodo ? fechaAPeriodoId(fecha) : (periodoActual?.periodoId ?? null);
       if (!periodoIdFinal) throw new Error(t.errNoActivePeriod);
+      let comprobante: { url: string; path: string } | null = null;
+      if (canComprobante && comprobanteFile) comprobante = await uploadComprobante(user.uid, comprobanteFile);
       await crearMovimiento(user.uid, {
         timestampCarga: new Date(), fecha, tipo,
         categoria: esMove ? "Move" : esCompraFX ? tipo : esGastoFX ? tipo : categoria,
@@ -216,6 +247,7 @@ export function MovementModal({ open, mode, movimiento, movimientos, config, act
         medioPago: esMove || esCompraFX ? "Mercado Pago" : esGastoFX ? "—" : medioPago,
         observaciones, periodoId: periodoIdFinal, userId: user.uid,
         ...(esMove ? { direccionMove: moveDir } : {}),
+        ...(comprobante ? { comprobanteUrl: comprobante.url, comprobantePath: comprobante.path } : {}),
         ...(esAhorros && origenAhorro ? { origenAhorro } : {}),
         ...(esCompraFX ? { cantidadUSD: usdFinal, cotizacion: cotizActual } : {}),
         ...(esGastoFX ? { cantidadUSD: usdFinal } : {}),
@@ -258,6 +290,16 @@ export function MovementModal({ open, mode, movimiento, movimientos, config, act
     try {
       const update: Partial<Movimiento> = { monto: parseFloat(eMonto), observaciones: eObs, descripcion: eDesc.trim() };
       if (!isLocked) update.medioPago = eMedio;
+      if (canComprobante) {
+        if (comprobanteFile) {
+          const up = await uploadComprobante(user.uid, comprobanteFile);
+          update.comprobanteUrl = up.url; update.comprobantePath = up.path;
+          await deleteComprobante(movimiento.comprobantePath); // borrar el anterior
+        } else if (comprobanteRemoved && movimiento.comprobanteUrl) {
+          update.comprobanteUrl = ""; update.comprobantePath = "";
+          await deleteComprobante(movimiento.comprobantePath);
+        }
+      }
       await actualizarMovimiento(user.uid, movimiento.id, update);
       onChanged(); onClose();
     } catch (err) { console.error(err); }
@@ -269,12 +311,48 @@ export function MovementModal({ open, mode, movimiento, movimientos, config, act
     setEditLoading(true);
     try {
       await eliminarMovimiento(user.uid, movimiento.id);
+      await deleteComprobante(movimiento.comprobantePath); // borrar el comprobante asociado
       onChanged(); onClose();
     } catch (err) { console.error(err); }
     finally { setEditLoading(false); }
   };
 
   const title = mode === "add" ? t.newMovement : view === "delete" ? t.delete : t.editMovement;
+
+  // Campo de comprobante reutilizable (alta y edición). `existingUrl` = comprobante ya guardado.
+  const comprobanteField = (existingUrl?: string) => {
+    if (!canComprobante) return null;
+    const thumb: React.CSSProperties = { maxHeight: 110, maxWidth: "100%", borderRadius: 10, border: "1px solid var(--border)", display: "block" };
+    const removeBtn: React.CSSProperties = { position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%", background: "var(--red)", color: "#fff", border: "2px solid var(--bg)", cursor: "pointer", fontSize: 14, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" };
+    const picker: React.CSSProperties = { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 14, border: "1px dashed var(--border)", borderRadius: 10, cursor: "pointer", color: "var(--muted)", fontSize: 13 };
+    const smallBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 10, cursor: "pointer", color: "var(--muted)", fontSize: 12, fontWeight: 600, background: "transparent" };
+    const showExisting = !!existingUrl && !comprobanteRemoved && !comprobantePreview;
+    return (
+      <div style={{ marginBottom: 20 }}>
+        <div className="label">{t.receipt}</div>
+        {comprobantePreview ? (
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <img src={comprobantePreview} alt="" style={thumb} />
+            <button type="button" onClick={clearComprobante} aria-label={t.removeReceipt} style={removeBtn}>×</button>
+          </div>
+        ) : showExisting ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <a href={existingUrl} target="_blank" rel="noreferrer"><img src={existingUrl} alt="" style={thumb} /></a>
+            <label style={smallBtn}>
+              <input type="file" accept="image/*" onChange={onComprobanteSelect} style={{ display: "none" }} />
+              {t.replaceReceipt}
+            </label>
+            <button type="button" onClick={clearComprobante} style={{ ...smallBtn, color: "var(--red)" }}>{t.removeReceipt}</button>
+          </div>
+        ) : (
+          <label style={picker}>
+            <input type="file" accept="image/*" onChange={onComprobanteSelect} style={{ display: "none" }} />
+            📎 {t.attachReceipt}
+          </label>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Sheet open={open} onClose={onClose} title={title}>
@@ -478,6 +556,8 @@ export function MovementModal({ open, mode, movimiento, movimientos, config, act
             <input className="input" type="text" value={observaciones} onChange={(e) => setObservaciones(e.target.value)} />
           </div>
 
+          {comprobanteField()}
+
           {tipo === "Gasto" && config?.meta.autoAhorro?.activo && (config.meta.autoAhorro.monto ?? 0) > 0 &&
            (!config.meta.autoAhorro.mediosPago?.length || config.meta.autoAhorro.mediosPago.includes(medioPago)) &&
            !(config.meta.autoAhorro.omitirDescripciones ?? []).some((d) => d.toLowerCase() === descripcion.trim().toLowerCase()) && (
@@ -553,6 +633,8 @@ export function MovementModal({ open, mode, movimiento, movimientos, config, act
             <div className="label">{t.notes}</div>
             <input className="input" value={eObs} onChange={(e) => setEObs(e.target.value)} />
           </div>
+
+          {comprobanteField(movimiento.comprobanteUrl)}
 
           <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: 56, marginTop: 8 }}>
             <button onClick={handleEdit} disabled={!isDirtyEdit || editLoading} aria-label={t.save} style={{
