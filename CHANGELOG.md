@@ -4,6 +4,14 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [2.3.2] — 2026-06-13
+
+### Changed (cron / notifications)
+- The cron can now run frequently (e.g. hourly) for timely notifications: the **Sheets sync self-throttles to ~once a day** (`lastAutoSync` guard) while notifications are evaluated on every run.
+- **Dollar-change alert is now frequency-independent**: the baseline re-anchors only when an alert fires, so it measures the *cumulative* move since the last alert instead of run-to-run (a gradual 3% daily move now triggers even when the cron runs hourly).
+
+---
+
 ## [2.3.1] — 2026-06-13
 
 ### Added

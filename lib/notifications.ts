@@ -56,17 +56,21 @@ async function notifyUser(uid: string, ctx: UserCtx): Promise<void> {
     updates.lastVersion = ctx.version;
   }
 
-  // 2) Cambio del dólar oficial (global, dedup por usuario).
+  // 2) Cambio del dólar oficial. El baseline (lastDolarOficial) se re-ancla SOLO
+  //    al avisar, así medimos el cambio ACUMULADO desde el último aviso y el
+  //    resultado no depende de cada cuánto corra la cron (clave si corre por hora).
   if (ctx.dolarOficial) {
     const last = notify.lastDolarOficial as number | undefined;
-    if (last) {
+    if (!last) {
+      updates.lastDolarOficial = ctx.dolarOficial; // primer registro
+    } else {
       const deltaPct = ((ctx.dolarOficial - last) / last) * 100;
       if (Math.abs(deltaPct) >= DOLAR_THRESHOLD_PCT) {
         const dir = deltaPct > 0 ? "subió" : "bajó";
         await sendPushToUser(uid, { title: "Dólar oficial", body: `El oficial ${dir} ${Math.abs(deltaPct).toFixed(1)}% · $${ctx.dolarOficial.toLocaleString("es-AR")}`, tag: "dolar", url: "/investments" });
+        updates.lastDolarOficial = ctx.dolarOficial; // re-anclar al avisar
       }
     }
-    updates.lastDolarOficial = ctx.dolarOficial;
   }
 
   // Para meta y sueldo necesitamos los movimientos + config del usuario.

@@ -39,18 +39,29 @@ export async function GET(req: NextRequest) {
     } catch { /* ignore */ }
   };
 
-  let result: { ok: boolean; synced?: number; error?: string };
-  try {
-    const { synced } = await syncUserMovimientosToSheet(ownerUid);
-    await appendLog({ status: "ok", type: "auto", at: Timestamp.now(), message: `Sync automática · ${synced} movimientos` });
-    result = { ok: true, synced };
-  } catch (err) {
-    console.error("[cron/sync-sheets]", err);
-    const message = err instanceof Error ? err.message : String(err);
-    await appendLog({ status: "error", type: "auto", at: Timestamp.now(), message });
-    // Aviso de fallo de sync — solo al dueño.
-    await sendPushToUser(ownerUid, { title: "FinMoves", body: "Falló la sincronización con Google Sheets", tag: "sync-error", url: "/settings" });
-    result = { ok: false, error: message };
+  // El sync a Sheets se auto-limita a ~1×/día aunque la cron corra más seguido
+  // (la frecuencia alta es para las notificaciones, no para re-sincronizar Sheets).
+  const SYNC_MIN_INTERVAL_MS = 20 * 60 * 60 * 1000;
+  const lastAutoSync = (await syncMetaRef.get()).data()?.lastAutoSync as Timestamp | undefined;
+  const shouldSync = !lastAutoSync || Date.now() - lastAutoSync.toMillis() > SYNC_MIN_INTERVAL_MS;
+
+  let result: { ok: boolean; synced?: number; error?: string; skipped?: boolean };
+  if (!shouldSync) {
+    result = { ok: true, skipped: true };
+  } else {
+    try {
+      const { synced } = await syncUserMovimientosToSheet(ownerUid);
+      await syncMetaRef.set({ lastAutoSync: Timestamp.now() }, { merge: true });
+      await appendLog({ status: "ok", type: "auto", at: Timestamp.now(), message: `Sync automática · ${synced} movimientos` });
+      result = { ok: true, synced };
+    } catch (err) {
+      console.error("[cron/sync-sheets]", err);
+      const message = err instanceof Error ? err.message : String(err);
+      await appendLog({ status: "error", type: "auto", at: Timestamp.now(), message });
+      // Aviso de fallo de sync — solo al dueño.
+      await sendPushToUser(ownerUid, { title: "FinMoves", body: "Falló la sincronización con Google Sheets", tag: "sync-error", url: "/settings" });
+      result = { ok: false, error: message };
+    }
   }
 
   // ── 2) Avisos para TODOS los usuarios (versión, dólar, meta, sueldo) ──

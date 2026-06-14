@@ -4,6 +4,13 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [2.3.2] — 2026-06-13
+
+### Mejoras
+- Las **notificaciones del dólar** ahora son más a tiempo y avisan por el cambio acumulado del día (antes podían no saltar).
+
+---
+
 ## [2.3.1] — 2026-06-13
 
 ### Mejoras
