@@ -4,6 +4,13 @@ All notable changes to FinMoves are documented here.
 
 ---
 
+## [2.5.1] — 2026-06-14
+
+### Fixed
+- Removed the `controllerchange` → `window.location.reload()` in the service worker registration. It was a leftover from the old skip-waiting update flow and could reload the page right when unlocking with biometrics, so the update/changelog notice never had a chance to appear. SW updates still apply silently on the next cold start.
+
+---
+
 ## [2.5.0] — 2026-06-14
 
 ### Added

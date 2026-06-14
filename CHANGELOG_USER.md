@@ -4,6 +4,13 @@ Lo nuevo y lo que mejoró, versión por versión.
 
 ---
 
+## [2.5.1] — 2026-06-14
+
+### Correcciones
+- Arreglamos que, al desbloquear con la huella, la app se recargara y tapara el aviso de novedades. Ahora el aviso aparece bien.
+
+---
+
 ## [2.5.0] — 2026-06-14
 
 ### Novedades

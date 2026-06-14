@@ -22,13 +22,9 @@ export function ServiceWorkerRegister() {
         const onVisible = () => { if (document.visibilityState === "visible") check(); };
         document.addEventListener("visibilitychange", onVisible);
 
-        // Cuando el SW nuevo toma control (tras SKIP_WAITING), recargar una sola vez.
-        let reloaded = false;
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-          if (reloaded) return;
-          reloaded = true;
-          window.location.reload();
-        });
+        // Sin reload en `controllerchange`: el SW nuevo se activa solo en el próximo
+        // arranque en frío. Recargar acá interrumpía el desbloqueo por huella y tapaba
+        // el aviso de novedades antes de que llegue a mostrarse.
 
         return () => { clearInterval(id); document.removeEventListener("visibilitychange", onVisible); };
       } catch (err) {
