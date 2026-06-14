@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 import {
   getFirestore,
   initializeFirestore,
@@ -21,6 +22,7 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 // En el cliente: caché persistente en IndexedDB → los datos quedan disponibles
 // sin conexión y las escrituras se encolan hasta reconectar. En el server (SSR)

@@ -30,6 +30,9 @@ export interface Movimiento {
   // Dirección del Move. Ausente o "aDisponible" = clásico (Ahorros → Disponible);
   // "aAhorro" = inverso (Disponible → Ahorros). Netea contra el mismo moveTotal.
   direccionMove?: "aDisponible" | "aAhorro";
+  // Comprobante adjunto (imagen en Cloud Storage). url para mostrar, path para borrar.
+  comprobanteUrl?: string;
+  comprobantePath?: string;
 }
 
 export interface ReservaUSD {
